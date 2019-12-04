@@ -1,0 +1,109 @@
+---
+title: "Mississipi Exploratory Work"
+author: "Ellen Graham"
+date: "12/4/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Some packages
+```{r}
+library(tidyverse)
+library(readr)
+```
+
+
+Load in the data!
+```{r, warning=FALSE}
+# all warnings come from empty line on end of files and can be ignored
+leg_0_col_names <- c("index", 
+               "crew", 
+               "date", 
+               "time_GMT", 
+               "latitude", 
+               "longitude",
+               "alt",
+               "speed", 
+               "heading",
+               "climb",
+               "accel_x",
+               "accel_y", 
+               "accel_z",
+               "gyro_x",
+               "gyro_y",
+               "gyro_z", 
+               "air_temp",
+               "air_gas",
+               "air_humid",
+               "air_pressure",
+               "water_temp", 
+               "ysi_ph",
+               "ysi_do",
+               "ysi_no3",
+               "ysi_sal",
+               "ysi_tur",
+               "flow")
+
+leg_0_col_types <- list(col_number(),
+                  col_character(),
+                  col_date(format = "%Y-%m-%d"),
+                  col_time(format = "%H:%M:%S"),
+                  col_number(), 
+                  col_number(), 
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number(),
+                  col_number())
+
+leg_2_col_names <- c(leg_0_col_names, "comp_time")
+leg_2_col_types <- rlist::list.append(leg_0_col_types, col_integer())
+
+leg_0_file_names <- list("data/2019830-datalog.txt",
+                         "data/2019831-datalog.txt",
+                         "data/20190902-datalog.txt")
+
+leg_2_file_names <- setdiff(list.files(path = "data", 
+                               pattern = ".txt",
+                               full.names = TRUE),
+                            leg_0_file_names)
+
+leg_0_data <- map(leg_0_file_names, read_csv,
+                  col_names = leg_0_col_names,
+                  col_types = leg_0_col_types,
+                  na = c("None")) %>% 
+  bind_rows()
+
+leg_2_data <- map(leg_2_file_names, read_csv,
+                  col_names = leg_2_col_names,
+                  col_types = leg_2_col_types,
+                  na = c("None", ""),
+                  skip_empty_rows = TRUE) %>% 
+  bind_rows()
+
+```
+
+Some notes: Leg 2 water temp not accurate, crew list not accurate
+
+
+
+
