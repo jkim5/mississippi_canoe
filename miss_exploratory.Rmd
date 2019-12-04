@@ -13,10 +13,12 @@ Some packages
 ```{r}
 library(tidyverse)
 library(readr)
+library(sf)
+library(glue)
 ```
 
 
-Load in the data!
+## Load in the data!
 ```{r, warning=FALSE}
 # all warnings come from empty line on end of files and can be ignored
 leg_0_col_names <- c("index", 
@@ -105,5 +107,147 @@ leg_2_data <- map(leg_2_file_names, read_csv,
 Some notes: Leg 2 water temp not accurate, crew list not accurate
 
 
+## Cleaning up the data:
+- Removing index, ysi_ph, ysi_d0, ysi_no3, ysi_sal, ysi_tur, flow from both leg 1 and leg 2 as they are 0 or NA for all observations
 
+- Removing crew_list and water_temp from leg 2 as they are not accurate
+- Adding combined datetime
+- Adding proper index to each observation
+
+```{r}
+leg_0_data <- leg_0_data %>% 
+  select(-ysi_ph, 
+         -ysi_do, 
+         -ysi_no3, 
+         -ysi_sal, 
+         -ysi_tur, 
+         -flow, 
+         -index)
+
+leg_2_data <- leg_2_data %>% 
+    select(-ysi_ph, 
+           -ysi_do, 
+           -ysi_no3, 
+           -ysi_sal, 
+           -ysi_tur, 
+           -flow,
+           -crew, 
+           -water_temp,
+           -index)
+
+
+
+leg_0_data <- leg_0_data %>% 
+  mutate(date_time = parse_datetime(paste(date, time_GMT), 
+                                    format = "%Y-%m-%d %H:%M:%S")) %>% 
+  mutate(index = 1:n()) %>% 
+  select(index, crew, date, time_GMT, date_time, everything())
+
+leg_2_data <- leg_2_data %>% 
+  mutate(date_time = parse_datetime(paste(date, time_GMT), 
+                                    format = "%Y-%m-%d %H:%M:%S")) %>% 
+  mutate(index = 1:n()) %>% 
+  select(index, date, time_GMT, date_time, everything())
+
+#warnings expected, come from NAs in date and time
+```
+
+## Exploring
+
+Make line graph for all numeric vars to see if any obvious errors
+
+For leg 0:
+```{r}
+num_vars_leg_0 <- leg_0_data %>% 
+  select_if(is.numeric) %>% 
+  select(-index) %>% 
+  names()
+
+
+produce_point_plot <- function(y_name, data_set) {
+  g <- ggplot(data_set) +
+    geom_point(aes_string(x = "index", y = y_name)) +
+    labs(title = glue("{y_name} over observations"))
+  return(g)
+}
+
+map(num_vars_leg_0, produce_point_plot, leg_0_data)
+```
+
+Notes:
+- Alt below 375 should ge thrown out, looks like anomaly (how do you drop 100m on a river?)
+- Climb over 20 should get tossed (just 3)
+- Not sure about gyro, would values seen track with just turning suddenly?
+- Air temp = 0 is wrong
+- air gas > 1+e7 outlier, air gas = 0 also looks like error
+- air_humid = 0 obvious error
+- air_pressure < 750 looks like error
+- water_temp = 0 looks like mistake
+
+Change outliers to NA:
+```{r}
+nrow(leg_0_data)
+
+clean_leg_0 <- leg_0_data %>% 
+  mutate(alt = ifelse(alt < 375, NA, alt)) %>% 
+  mutate(climb = ifelse(climb > 20, NA, climb)) %>% 
+  mutate(air_temp = ifelse(air_temp == 0, NA, air_temp)) %>% 
+  mutate(air_gas = ifelse(air_gas > 1e7 | air_gas == 0, NA, air_gas)) %>% 
+  mutate(air_humid = ifelse(air_humid == 0, NA, air_humid)) %>% 
+  mutate(air_pressure = ifelse(air_pressure < 750, NA, air_pressure)) %>% 
+  mutate(water_temp = ifelse(water_temp == 0, NA, water_temp))
+```
+Check graphs again
+```{r}
+map(num_vars_leg_0, produce_point_plot, clean_leg_0)
+```
+
+Looks like we got the obvious ones
+
+For leg 2:
+
+```{r}
+num_vars_leg_2 <- leg_2_data %>% 
+  select_if(is.numeric) %>% 
+  select(-index) %>% 
+  names()
+
+map(num_vars_leg_2, produce_point_plot, leg_2_data)
+
+```
+
+Notes: 
+- Some weird things happen with alt, not sure how to reconcile them
+- Speed > 50 obvious error
+- climb < -100 looks fake
+  - climb is in m/s, no way above or below 15, -15
+- Think all gyros look fine?
+- Air temp = 0 obvious error
+- air gas seems strange, some massive spikes, should investigate (throw out 0's?)
+  - Throw out 0's and throw out >2e6 (very small prop have this high value, weird jump to reach them, seems odd)
+    - maybe its pollen spikes!
+- air humid = 0 obvious error
+- air_pressure = 0 obvious error
+
+
+```{r}
+nrow(leg_2_data)
+clean_leg_2 <- leg_2_data %>% 
+  mutate(speed = ifelse(speed > 50, NA, speed)) %>% 
+  mutate(climb = ifelse(abs(climb) > 15, NA, climb)) %>% 
+  mutate(air_temp = ifelse(air_temp == 0, NA, air_temp)) %>% 
+  mutate(air_gas = ifelse(air_gas == 0 | air_gas > 2e6, NA, air_gas)) %>% 
+  mutate(air_humid = ifelse(air_humid == 0, NA, air_humid)) %>% 
+  mutate(air_pressure = ifelse(air_pressure == 0, NA, air_pressure))
+```
+
+Check again:
+```{r}
+map(num_vars_leg_2, produce_point_plot, clean_leg_2)
+
+
+ggplot(clean_leg_2) +
+  geom_histogram(aes(x = air_gas))
+# looks like air_gas >2+e6 is too much
+```
 
