@@ -15,6 +15,9 @@ library(tidyverse)
 library(readr)
 library(sf)
 library(glue)
+library(lubridate)
+library(rnaturalearthdata)
+library(rnaturalearth)
 ```
 
 
@@ -109,8 +112,7 @@ Some notes: Leg 2 water temp not accurate, crew list not accurate
 
 ## Cleaning up the data:
 - Removing index, ysi_ph, ysi_d0, ysi_no3, ysi_sal, ysi_tur, flow from both leg 1 and leg 2 as they are 0 or NA for all observations
-
-- Removing crew_list and water_temp from leg 2 as they are not accurate
+- Set crew list and water temp to NA for leg 2
 - Adding combined datetime
 - Adding proper index to each observation
 
@@ -122,43 +124,54 @@ leg_0_data <- leg_0_data %>%
          -ysi_sal, 
          -ysi_tur, 
          -flow, 
-         -index)
+         -index) %>% 
+  mutate(leg = 0)
 
 leg_2_data <- leg_2_data %>% 
-    select(-ysi_ph, 
-           -ysi_do, 
-           -ysi_no3, 
-           -ysi_sal, 
-           -ysi_tur, 
-           -flow,
-           -crew, 
-           -water_temp,
-           -index)
+  select(-ysi_ph, 
+         -ysi_do, 
+         -ysi_no3, 
+         -ysi_sal, 
+         -ysi_tur, 
+         -flow,
+         -index,
+         -comp_time) %>% 
+  mutate(leg = 2) %>% 
+  mutate(crew = NA, water_temp = NA)
 
 
 
-leg_0_data <- leg_0_data %>% 
+
+all_legs <- bind_rows(leg_0_data, leg_2_data) %>% 
   mutate(date_time = parse_datetime(paste(date, time_GMT), 
                                     format = "%Y-%m-%d %H:%M:%S")) %>% 
+  group_by(leg) %>% 
   mutate(index = 1:n()) %>% 
+  ungroup() %>% 
   select(index, crew, date, time_GMT, date_time, everything())
-
-leg_2_data <- leg_2_data %>% 
-  mutate(date_time = parse_datetime(paste(date, time_GMT), 
-                                    format = "%Y-%m-%d %H:%M:%S")) %>% 
-  mutate(index = 1:n()) %>% 
-  select(index, date, time_GMT, date_time, everything())
-
 #warnings expected, come from NAs in date and time
 ```
 
+
+I'm going to remove all observations without a time associated with them. There are 6000 cases where time is out of order already, so I feel trying to interpolate based on the time is inapporpriate, as we have no guarentee those times are correct.
+
+I'm also going to remove observations where air_gas and related measurements weren't taken, as there are only 16 total and only 2 after removing missing times. 
+
+
+```{r}
+all_legs_small <- all_legs %>% 
+  filter(!is.na(date)) %>% 
+  arrange(leg,date_time) %>% 
+  filter(!is.na(air_pressure))
+```
+
+
+
 ## Exploring
 
-Make line graph for all numeric vars to see if any obvious errors
-
-For leg 0:
+Make line graph for all numeric vars to see if any obvious errors in the data
 ```{r}
-num_vars_leg_0 <- leg_0_data %>% 
+num_vars <- all_legs_small %>% 
   select_if(is.numeric) %>% 
   select(-index) %>% 
   names()
@@ -171,83 +184,49 @@ produce_point_plot <- function(y_name, data_set) {
   return(g)
 }
 
-map(num_vars_leg_0, produce_point_plot, leg_0_data)
+map(num_vars, produce_point_plot, all_legs_small)
 ```
 
-Notes:
-- Alt below 375 should ge thrown out, looks like anomaly (how do you drop 100m on a river?)
-- Climb over 20 should get tossed (just 3)
-- Not sure about gyro, would values seen track with just turning suddenly?
-- Air temp = 0 is wrong
-- air gas > 1+e7 outlier, air gas = 0 also looks like error
-- air_humid = 0 obvious error
-- air_pressure < 750 looks like error
-- water_temp = 0 looks like mistake
+Looks like a lot of sensors give 0 when it obviously shouldn't be. 
+I'm going to set 0's for air_temp, air_gas, air_humid, air_pressure to NA
 
-Change outliers to NA:
+To help fix spikes in data, I'm going to take the median value in each 15? second chunk of time for all points
 ```{r}
-nrow(leg_0_data)
+all_legs_med <- all_legs_small %>% 
+  mutate(air_temp = ifelse(air_temp == 0, NA, air_temp),
+         air_gas = ifelse(air_gas == 0, NA, air_gas),
+         air_humid = ifelse(air_humid == 0, NA, air_humid),
+         air_pressure = ifelse(air_pressure == 0, NA, air_pressure)) %>% 
+  mutate(time_in_sec = as.numeric(date_time)) %>% 
+  mutate(ten_sec_chunk = (time_in_sec%/%15)*15) %>% 
+  group_by(ten_sec_chunk) %>% 
+  summarise_at(6:23, median, na.rm = TRUE) %>% 
+  mutate(date_time = as_datetime(ten_sec_chunk)) %>% 
+  mutate(index = 1:n())
+ 
 
-clean_leg_0 <- leg_0_data %>% 
-  mutate(alt = ifelse(alt < 375, NA, alt)) %>% 
-  mutate(climb = ifelse(climb > 20, NA, climb)) %>% 
-  mutate(air_temp = ifelse(air_temp == 0, NA, air_temp)) %>% 
-  mutate(air_gas = ifelse(air_gas > 1e7 | air_gas == 0, NA, air_gas)) %>% 
-  mutate(air_humid = ifelse(air_humid == 0, NA, air_humid)) %>% 
-  mutate(air_pressure = ifelse(air_pressure < 750, NA, air_pressure)) %>% 
-  mutate(water_temp = ifelse(water_temp == 0, NA, water_temp))
-```
-Check graphs again
-```{r}
-map(num_vars_leg_0, produce_point_plot, clean_leg_0)
-```
-
-Looks like we got the obvious ones
-
-For leg 2:
-
-```{r}
-num_vars_leg_2 <- leg_2_data %>% 
+num_vars_med <- all_legs_med %>% 
   select_if(is.numeric) %>% 
-  select(-index) %>% 
   names()
 
-map(num_vars_leg_2, produce_point_plot, leg_2_data)
-
+map(num_vars_med, produce_point_plot, all_legs_med)
+ 
 ```
 
-Notes: 
-- Some weird things happen with alt, not sure how to reconcile them
-- Speed > 50 obvious error
-- climb < -100 looks fake
-  - climb is in m/s, no way above or below 15, -15
-- Think all gyros look fine?
-- Air temp = 0 obvious error
-- air gas seems strange, some massive spikes, should investigate (throw out 0's?)
-  - Throw out 0's and throw out >2e6 (very small prop have this high value, weird jump to reach them, seems odd)
-    - maybe its pollen spikes!
-- air humid = 0 obvious error
-- air_pressure = 0 obvious error
+I'm pretty happy with the results, lets start building maps!
 
+First a couple more steps, lets make lat+long into a simple features geometry object
 
 ```{r}
-nrow(leg_2_data)
-clean_leg_2 <- leg_2_data %>% 
-  mutate(speed = ifelse(speed > 50, NA, speed)) %>% 
-  mutate(climb = ifelse(abs(climb) > 15, NA, climb)) %>% 
-  mutate(air_temp = ifelse(air_temp == 0, NA, air_temp)) %>% 
-  mutate(air_gas = ifelse(air_gas == 0 | air_gas > 2e6, NA, air_gas)) %>% 
-  mutate(air_humid = ifelse(air_humid == 0, NA, air_humid)) %>% 
-  mutate(air_pressure = ifelse(air_pressure == 0, NA, air_pressure))
+clean_legs <- st_as_sf(all_legs_med, coords = c("longitude", "latitude"))
 ```
 
-Check again:
 ```{r}
-map(num_vars_leg_2, produce_point_plot, clean_leg_2)
+us_sf <- ne_states(country = "united states of america", returnclass = "sf")
 
-
-ggplot(clean_leg_2) +
-  geom_histogram(aes(x = air_gas))
-# looks like air_gas >2+e6 is too much
+ggplot(us_sf) + 
+  geom_sf() +
+  coord_sf()
 ```
+
 
