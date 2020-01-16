@@ -170,7 +170,7 @@ all_legs_small <- all_legs %>%
 ## Exploring
 
 Make line graph for all numeric vars to see if any obvious errors in the data
-```{r}
+```{r, eval=FALSE}
 num_vars <- all_legs_small %>% 
   select_if(is.numeric) %>% 
   select(-index) %>% 
@@ -209,7 +209,7 @@ num_vars_med <- all_legs_med %>%
   select_if(is.numeric) %>% 
   names()
 
-map(num_vars_med, produce_point_plot, all_legs_med)
+# map(num_vars_med, produce_point_plot, all_legs_med)
  
 ```
 
@@ -218,15 +218,43 @@ I'm pretty happy with the results, lets start building maps!
 First a couple more steps, lets make lat+long into a simple features geometry object
 
 ```{r}
-clean_legs <- st_as_sf(all_legs_med, coords = c("longitude", "latitude"))
+clean_legs <- st_as_sf(all_legs_med, coords = c("longitude", "latitude"), crs = 4326)
 ```
+
+Load up a mississippi river file
+```{r}
+river_50 <- st_as_sf(ne_download(scale = 10, type = 'rivers_lake_centerlines', category = 'physical'))
+
+miss_basin <- st_read("miss_basin\\Miss_RiverBasin.shp") %>% 
+  st_transform(crs = 4326)
+
+```
+
 
 ```{r}
 us_sf <- ne_states(country = "united states of america", returnclass = "sf")
 
-ggplot(us_sf) + 
-  geom_sf() +
-  coord_sf()
+tiny_legs = clean_legs[seq(1, nrow(clean_legs), 100), ]
+
+
+miss_rivers <- river_50 %>% 
+  filter(name %in% c("Mississippi", "Ohio", "Missouri"))
+states_in_miss_basin <- st_intersection(miss_basin, us_sf)
+ggplot() + 
+  #geom_sf(data = miss_basin, fill = "#D3DBC6") +
+  geom_sf(data = states_in_miss_basin, fill = "#FAFAFA") +
+  geom_sf(data = miss_rivers, color = "#409CFF") +
+  geom_sf(data = tiny_legs, aes(color = heading)) +
+  coord_sf(xlim = c(-115.00, -77.00), ylim = c(27.00, 50.00), expand = FALSE, datum = NA) +
+  theme_minimal() +
+  scale_color_viridis_c(option = "plasma")
+
 ```
 
+
+Download clean legs
+```{r, eval=FALSE}
+write_csv(all_legs_med, "clean_data\\clean_data_non_geom.csv")
+BRRR::skrrrahh(0)
+```
 
