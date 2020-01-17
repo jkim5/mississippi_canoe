@@ -4,3 +4,5 @@ Time worked:
 2.5 hours 1/13/2020
 1.75 hours 1/14/2020
 1.5 hours 1/15/2020
+1 hour 1/16/2020
+4 hours 1/17/2020
