@@ -132,10 +132,23 @@ all_legs <- bind_rows(leg_0_data, leg_2_data) %>%
 # manipulating data
 ##########################################
 
+# days while walking / time out of river
+nola_leg <- interval(ymd_hms("2019-11-09 00:00:00"),
+                 ymd_hms("2019-11-17 23:59:59"))
+
+st_louis_leg <- interval(ymd_hms("2019-09-27 00:00:00"),
+                 ymd_hms("2019-10-07 23:59:59"))
+
+highway_leg <- interval(ymd_hms("2019-10-11 14:33:30"),
+                 ymd_hms("2019-10-11 19:37:00"))
+
 all_legs_small <- all_legs %>% 
   filter(!is.na(date)) %>% 
   arrange(leg,date_time) %>% 
-  filter(!is.na(air_pressure))
+  filter(!is.na(air_pressure)) %>% 
+  filter(!(date_time %within% nola_leg),
+         !(date_time %within% st_louis_leg),
+         !(date_time %within% highway_leg))
 
 all_legs_median <- all_legs_small %>% 
   mutate(air_temp = ifelse(air_temp == 0, NA, air_temp),
@@ -147,7 +160,7 @@ all_legs_median <- all_legs_small %>%
   group_by(fifteen_sec_chunk) %>% 
   summarise_at(6:23, median, na.rm = TRUE) %>% 
   mutate(date_time = as_datetime(fifteen_sec_chunk)) %>% 
-  mutate(index = 1:n()) 
+  mutate(index = 1:n())
 
 st_as_sf(all_legs_median, coords = c("longitude", "latitude"), crs = 4326) %>%
   st_write("clean_data/clean_legs/clean_data_geom.shp", delete_layer = TRUE)
@@ -156,3 +169,7 @@ miss_basin <- st_read("clean_data/miss_basin/Miss_RiverBasin.shp") %>%
   st_transform(crs = 4326) %>% 
   rmapshaper::ms_simplify() %>% 
   st_write("clean_data/miss_basin_simple/Miss_RiverBasin.shp", delete_layer = TRUE)
+
+date_time_data <- all_legs_median %>% 
+  select(date_time) %>% 
+  readr::write_csv("clean_data/date_time_data.csv")

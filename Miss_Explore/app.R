@@ -12,7 +12,10 @@ library(htmltools)
 
 miss_basin_simple <- st_read("clean_data/miss_basin_simple/Miss_RiverBasin.shp")
 
-clean_legs <- st_read("clean_data/clean_legs/clean_data_geom.shp")
+date_time_data <- readr::read_csv("clean_data/date_time_data.csv")
+clean_legs <- st_read("clean_data/clean_legs/clean_data_geom.shp") %>% 
+  mutate(date_time = date_time_data$date_time)
+
 tiny_legs = clean_legs[seq(1, nrow(clean_legs), 10), ]
 
 
@@ -64,7 +67,10 @@ server <- function(input, output, session) {
     
   my_pal <- reactive({
     
-      if(input$cont_var == "air_gas") {
+      if(input$cont_var == "air_gas" ||
+         input$cont_var == "gyro_x" ||
+         input$cont_var == "gyro_y" ||
+         input$cont_var == "gyro_z") {
         colorNumericScaled("plasma", 
                            tiny_legs[[input$cont_var]], 
                            scale_function = asinh)
@@ -89,7 +95,7 @@ server <- function(input, output, session) {
                        color = my_pal()(tiny_legs[[input$cont_var]]),
                        fill = TRUE,
                        fillColor = my_pal()(tiny_legs[[input$cont_var]]),
-                       popup = glue('{tiny_legs$date_tm}<br> Value: {tiny_legs[[input$cont_var]]}'),
+                       popup = glue('{tiny_legs$date_time}<br> Value: {tiny_legs[[input$cont_var]]}'),
                        label = glue('Value: {tiny_legs[[input$cont_var]]}'),
                        group = "sparse_markers"
       ) %>% 
