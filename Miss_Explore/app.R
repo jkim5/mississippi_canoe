@@ -10,17 +10,10 @@ library(glue)
 library(htmltools)
 
 
-(list.files(recursive = TRUE))
+miss_basin_simple <- st_read("clean_data/miss_basin_simple/Miss_RiverBasin.shp")
 
-miss_basin <- st_read("clean_data/miss_basin/Miss_RiverBasin.shp") %>% 
-  st_transform(crs = 4326)
-miss_basin_simple <- rmapshaper::ms_simplify(miss_basin)
-
-
-
-all_legs_med <- read_csv("clean_data/clean_data_non_geom.csv")
-clean_legs <- st_as_sf(all_legs_med, coords = c("longitude", "latitude"), crs = 4326)
-tiny_legs = clean_legs[seq(1, nrow(clean_legs), 50), ]
+clean_legs <- st_read("clean_data/clean_legs/clean_data_geom.shp")
+tiny_legs = clean_legs[seq(1, nrow(clean_legs), 10), ]
 
 
 

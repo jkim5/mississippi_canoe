@@ -149,4 +149,10 @@ all_legs_median <- all_legs_small %>%
   mutate(date_time = as_datetime(fifteen_sec_chunk)) %>% 
   mutate(index = 1:n())
  
-readr::write_csv(all_legs_median, "clean_data\\clean_data_non_geom.csv")
+st_as_sf(all_legs_median, coords = c("longitude", "latitude"), crs = 4326) %>%
+  st_write("clean_data/clean_legs/clean_data_geom.shp")
+
+miss_basin <- st_read("clean_data/miss_basin/Miss_RiverBasin.shp") %>% 
+  st_transform(crs = 4326) %>% 
+  rmapshaper::ms_simplify() %>% 
+  st_write("clean_data/miss_basin_simple/Miss_RiverBasin.shp")
