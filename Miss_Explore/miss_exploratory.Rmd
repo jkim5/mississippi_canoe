@@ -258,31 +258,3 @@ readr::write_csv(all_legs_med, "clean_data\\clean_data_non_geom.csv")
 BRRR::skrrrahh(0)
 ```
 
-```{r}
-section_1_poly <- st_polygon(x = list(rbind(c(-95.66165, 47.00948),
-                                  c(-95.66165, 47.7275),
-                                  c(-94.68412, 47.7275), 
-                                  c(-94.68412, 47.00948),
-                                  c(-95.66165, 47.00948))))
-
-section_2_poly <- st_polygon(x = list(rbind(c(-90.70569, 43.13306),
-                                  c(-90.70569, 43.89789),
-                                  c(-91.73814, 43.89789), 
-                                  c(-91.73814, 43.13306),
-                                  c(-90.70569, 43.13306))))
-
-section_3_poly <- st_polygon(x = list(rbind(c(-88.49971, 35.90685),
-                                  c(-88.49971, 39.43619),
-                                  c(-91.04787, 39.43619), 
-                                  c(-91.04787, 35.90685),
-                                  c(-88.49971, 35.90685))))
-
-section_4_poly <- st_polygon(x = list(rbind(c(-89.12831, 29.17231),
-                                  c(-89.12831, 30.58212),
-                                  c(-91.37375, 30.58212), 
-                                  c(-91.37375, 29.17231),
-                                  c(-89.12831, 29.17231))))
-
-temp <- filter(tiny_legs, as.logical(st_within(geometry, section_4_poly, sparse = FALSE)))
-```
-
