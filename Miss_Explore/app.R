@@ -28,10 +28,50 @@ ui <- bootstrapPage(
   )
 )
 
+colorNumericScaled <- function (palette, domain, na.color = "#808080", alpha = FALSE, 
+    reverse = FALSE, scale_function = asinh) 
+{
+    rng <- NULL
+    domain <- scale_function(domain)
+    if (length(domain) > 0) {
+        rng <- range(domain, na.rm = TRUE)
+        if (!all(is.finite(rng))) {
+            stop("Wasn't able to determine range of domain")
+        }
+    }
+    pf <- leaflet:::safePaletteFunc(palette, na.color, alpha)
+    leaflet:::withColorAttr("numeric", list(na.color = na.color), 
+        function(x) {
+            x <- scale_function(x)
+          
+            if (length(x) == 0 || all(is.na(x))) {
+                return(pf(x))
+            }
+            if (is.null(rng)) 
+                rng <- range(x, na.rm = TRUE)
+            rescaled <- scales::rescale(x, from = rng)
+            if (any(rescaled < 0 | rescaled > 1, na.rm = TRUE)) 
+                warning("Some values were outside the color scale and will be treated as NA")
+            if (reverse) {
+                rescaled <- 1 - rescaled
+            }
+            pf(rescaled)
+        })
+}
+
+
 server <- function(input, output, session) {
     
   my_pal <- reactive({
-      colorNumeric("plasma", tiny_legs[[input$cont_var]])
+    
+      if(input$cont_var == "air_gas") {
+        colorNumericScaled("plasma", 
+                           tiny_legs[[input$cont_var]], 
+                           scale_function = asinh)
+      } else {
+        colorNumeric("plasma", 
+                     tiny_legs[[input$cont_var]])
+      }
   })
   output$map <- renderLeaflet({
     # Use leaflet() here, and only include aspects of the map that
@@ -49,7 +89,7 @@ server <- function(input, output, session) {
                        color = my_pal()(tiny_legs[[input$cont_var]]),
                        fill = TRUE,
                        fillColor = my_pal()(tiny_legs[[input$cont_var]]),
-                       popup = glue('{tiny_legs$date_time}<br> Value: {tiny_legs[[input$cont_var]]}'),
+                       popup = glue('{tiny_legs$date_tm}<br> Value: {tiny_legs[[input$cont_var]]}'),
                        label = glue('Value: {tiny_legs[[input$cont_var]]}'),
                        group = "sparse_markers"
       ) %>% 
