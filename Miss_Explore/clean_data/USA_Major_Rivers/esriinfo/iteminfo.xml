@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ESRI_ItemInformation Culture='en-US'>
+<name>USA Major Rivers</name>
+<guid>3ABED1FD-56CA-4B0C-913E-E74B2CDCEB90</guid>
+<catalogpath></catalogpath>
+<snippet>This layer presents the major rivers within the United States.</snippet>
+<description>This layer presents the major rivers within the United States. This generalized version provides a base map layer of major rivers of the United States.
+</description>
+<summary>This layer presents the major rivers within the United States.</summary>
+<title>USA Major Rivers</title>
+<tags>layer, line, rivers, drainage, hydrography, inlandWaters; United States, 2009, 1992, 1990, 1991</tags>
+<type>Layer Package</type>
+<typekeywords>
+<typekeyword>File Geodatabase Feature Class</typekeyword>
+<typekeyword>Layer Package</typekeyword>
+<typekeyword>Data</typekeyword>
+<typekeyword>ArcMap</typekeyword>
+<typekeyword>ArcGlobe</typekeyword>
+<typekeyword>ArcGIS Explorer</typekeyword>
+<typekeyword>lpk</typekeyword>
+</typekeywords>
+<thumbnail>thumbnail/thumbnail.png</thumbnail>
+<documentation></documentation>
+<url></url>
+<datalastmodifiedtime></datalastmodifiedtime>
+<extent>
+<xmin>-164.765827272727</xmin>
+<ymin>25.8455545454546</ymin>
+<xmax>-67.7909802727272</xmax>
+<ymax>70.4097565347225</ymax>
+</extent>
+<spatialreference>GCS_WGS_1984</spatialreference>
+<accessinformation>source: Esri, Rand McNally &amp; Company, Bartholemew and Times Books, Defense Mapping Agency presently known as National Geospatial-Intelligence Agency</accessinformation>
+<licenseinfo>The datasets included within Esri Data &amp; Maps are subject to varying redistribution rights that have been granted by Esri’s third party data suppliers. Consult the Redistribution Rights document to determine the ways in which Licensee is permitted to use and redistribute each specific dataset and the applicable disclaimers, attribution requirements, and other conditions of use.</licenseinfo>
+</ESRI_ItemInformation>

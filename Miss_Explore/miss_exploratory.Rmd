@@ -223,10 +223,14 @@ clean_legs <- st_as_sf(all_legs_med, coords = c("longitude", "latitude"), crs = 
 
 Load up a mississippi river file
 ```{r}
-river_50 <- st_as_sf(ne_download(scale = 10, type = 'rivers_lake_centerlines', category = 'physical'))
+river_10 <- st_as_sf(ne_download(scale = 10, type = 'rivers_lake_centerlines', category = 'physical'))
 
-miss_basin <- st_read("data\\miss_basin\\Miss_RiverBasin.shp") %>% 
+river_50 <- st_as_sf(ne_download(scale = 50, type = 'rivers_lake_centerlines', category = 'physical'))
+
+miss_basin <- st_read("clean_data\\miss_basin\\Miss_RiverBasin.shp") %>% 
   st_transform(crs = 4326)
+
+USA_Rivers_and_Streams <- st_read("clean_data/USA_Rivers_and_Streams/USA_Rivers_and_Streams.shp")
 
 ```
 
@@ -236,6 +240,27 @@ us_sf <- ne_states(country = "united states of america", returnclass = "sf")
 
 tiny_legs = clean_legs[seq(1, nrow(clean_legs), 100), ]
 
+miss_basin_rivers_10 <- st_intersection(miss_basin, river_10)
+
+ggplot(miss_basin_rivers_10) +
+  geom_sf()
+
+miss_basin_USA <- st_intersection(miss_basin, USA_Rivers_and_Streams)
+
+ggplot() + 
+  geom_sf(data = miss_basin_USA)
+
+miss_basin_USA <- miss_basin_USA %>% 
+  select(-Shape_Area, -Shape_Leng, -area_mi2)
+
+miss_basin_USA_small <- miss_basin_USA %>% 
+  filter(NAME == "Missouri River")
+
+ggplot() + 
+  geom_sf(data = miss_basin_USA_small)
+
+
+st_write(miss_basin_USA, "clean_data/Basin_USA/Basin_USA1.shp", delete_layer = TRUE)
 
 miss_rivers <- river_50 %>% 
   filter(name %in% c("Mississippi", "Ohio", "Missouri"))
@@ -257,4 +282,22 @@ Download clean legs
 readr::write_csv(all_legs_med, "clean_data\\clean_data_non_geom.csv")
 BRRR::skrrrahh(0)
 ```
+
+
+```{r, fig.width=10,fig.height=11}
+plot(miss_basin_rivers_10 %>% filter(name == "Mississippi"))
+
+
+map <- ggplot() +
+  geom_sf(data = miss_basin_rivers_10, color = "light blue") +
+  geom_sf(data = filter(miss_basin_rivers_10, name %in% c("Mississippi", "Bayou Lafourche")), size = 1.5, color = "#A9BCCB") +
+  coord_sf(datum = NA) +
+  theme_void()
+
+
+
+
+
+```
+
 

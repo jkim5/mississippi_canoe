@@ -1,0 +1,141 @@
+---
+title: "Art Attempts"
+author: "Ellen Graham"
+date: "1/21/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(sf)
+library(readr)
+library(viridis)
+library(ggmap)
+library(rnaturalearth)
+library(lubridate)
+```
+
+
+Load in the data
+```{r}
+date_time_data <- readr::read_csv("Miss_explore/clean_data/date_time_data.csv")
+clean_legs <- st_read("Miss_explore/clean_data/clean_legs/clean_data_geom.shp") %>% 
+  mutate(date_time = date_time_data$date_time)
+
+coords <- st_coordinates(clean_legs)
+
+clean_legs_non_geom <- st_drop_geometry(clean_legs) %>% 
+  select(-date_tm) %>% 
+  bind_cols(as.data.frame(coords)) %>% 
+  rename(lat = "Y", lon = "X")
+
+
+miss_basin <- st_read("Miss_explore/clean_data/miss_basin/Miss_RiverBasin.shp") %>% 
+  st_transform(crs = 4326)
+
+river_10 <- st_as_sf(ne_download(scale = 10, type = 'rivers_lake_centerlines', category = 'physical'))
+
+
+miss_basin_rivers_10 <- st_intersection(miss_basin, river_10)
+```
+
+```{r}
+chunk_1_interval <- interval(ymd_hms("2019-08-29 00:00:00"),
+                             ymd_hms("2019-09-03 23:59:59"))
+
+chunk_2_interval <- interval(ymd_hms("2019-09-24 00:00:00"),
+                             ymd_hms("2019-09-26 23:59:59"))
+
+chunk_3_interval <- interval(ymd_hms("2019-10-08 00:00:00"),
+                             ymd_hms("2019-10-12 23:59:59"))
+
+chunk_4_interval <- interval(ymd_hms("2019-10-13 00:00:00"),
+                             ymd_hms("2019-10-18 23:59:59"))
+
+chunk_5_interval <- interval(ymd_hms("2019-10-31 00:00:00"),
+                             ymd_hms("2019-11-22 23:59:59"))
+
+chunk_intervals <- list(chunk_1_interval,
+                        chunk_2_interval,
+                        chunk_3_interval,
+                        chunk_4_interval,
+                        chunk_5_interval)
+
+chunk_num <- map(chunk_intervals, function(b, a){a %within% b}, clean_legs$date_time) %>% 
+  pmap_int(function(a, b, c, d, e) {
+      chunk_num <- which(c(a, b, c, d, e))
+      
+      ifelse(length(chunk_num) == 0, NA, chunk_num)
+    })
+
+clean_legs <- clean_legs %>% 
+  mutate(chunk = chunk_num) %>% 
+  filter(!is.na(chunk))
+
+
+(first_per_chunk <- clean_legs %>% 
+  group_by(chunk) %>% 
+  summarise(index = first(index)))
+first_coords <- as.data.frame(st_coordinates(first_per_chunk), names = c("lon", "lat"))
+# TODO: Reorder when we remove geometry to allow for summarizing  
+first_per_chunk <- first_per_chunk %>% 
+  st_drop_geometry() %>% 
+  bind_cols(first_coords)
+
+(last_per_chunk <- clean_legs %>% 
+  group_by(chunk) %>% 
+  summarise(index = last(index)))
+last_coords <- as.data.frame(st_coordinates(last_per_chunk), colnames = c("lon", "lat"))
+first_last_chunk <- bind_rows(first_per_chunk, last_per_chunk)
+```
+
+
+Start Visualizing
+```{r, fig.width=10, fig.height=8}
+miss_cities <- tibble(name = c("Memphis", "Minneapolis", "New Orleans", "St. Louis", "Baton Rouge", "Davenport"),
+                      lat = c(35.1495, 44.9778, 29.9511, 38.6270, 30.4515, 41.5236),
+                      lon = c(-90.0490, -93.2650, -90.0715, -90.1994, -91.1871, -90.5776)) %>% 
+  st_as_sf(coords = c("lon", "lat"), remove = FALSE, crs = 4326)
+
+bounding_circles <- 
+
+
+(map <- ggplot() +
+  geom_sf(data = miss_basin_rivers_10, color = "light blue") +
+  geom_sf(data = filter(miss_basin_rivers_10, name %in% c("Mississippi", "Bayou Lafourche")), size = 1.5, color = "#A9BCCB") +
+  geom_sf(data = miss_cities, size = 3) +
+  geom_text(data = miss_cities, 
+            aes(x = lon, y = lat, label = name),
+            hjust = 0, 
+            nudge_x = 0.3, nudge_y = 0.3,
+            fontface = "italic",
+            color = "grey22") +
+  coord_sf(datum = NA) +
+  theme_void())
+
+map
+
+(gradient <- ggplot(clean_legs_non_geom) +
+  geom_tile(aes(x = 0, y = index, fill = heading), width = 1, height = 1, alpha = 0.7) +
+  scale_fill_viridis(option = "C") + 
+  theme_void() +
+  theme(legend.position = "none") +
+  coord_cartesian(ylim = c(1, 25260),
+                  xlim = c(-0.5, 0.5)))
+  
+map +
+  annotation_custom(ggplotGrob(gradient), 
+                    xmin = -105,
+                    xmax = -102,
+                    ymin = 28.92833,
+                    ymax = 48.16291)
+```
+
+
+
+
