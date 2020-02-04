@@ -5,6 +5,6 @@ account: grahamammal
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1672558
-bundleId: 2739857
+bundleId: 2772257
 url: https://grahamammal.shinyapps.io/miss_explore/
-when: 1579462509.63758
+when: 1580759382.39846

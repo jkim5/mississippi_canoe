@@ -18,6 +18,9 @@ library(viridis)
 library(ggmap)
 library(rnaturalearth)
 library(lubridate)
+library(purrr)
+library(tidyr)
+
 ```
 
 
@@ -26,6 +29,8 @@ Load in the data
 date_time_data <- readr::read_csv("Miss_explore/clean_data/date_time_data.csv")
 clean_legs <- st_read("Miss_explore/clean_data/clean_legs/clean_data_geom.shp") %>% 
   mutate(date_time = date_time_data$date_time)
+
+tiny_legs = clean_legs[seq(1, nrow(clean_legs), 10), ]
 
 coords <- st_coordinates(clean_legs)
 
@@ -73,39 +78,59 @@ chunk_num <- map(chunk_intervals, function(b, a){a %within% b}, clean_legs$date_
       ifelse(length(chunk_num) == 0, NA, chunk_num)
     })
 
-clean_legs <- clean_legs %>% 
+clean_legs_non_geom <- clean_legs_non_geom %>% 
   mutate(chunk = chunk_num) %>% 
   filter(!is.na(chunk))
 
 
-(first_per_chunk <- clean_legs %>% 
+(first_per_chunk <- clean_legs_non_geom %>% 
   group_by(chunk) %>% 
-  summarise(index = first(index)))
-first_coords <- as.data.frame(st_coordinates(first_per_chunk), names = c("lon", "lat"))
-# TODO: Reorder when we remove geometry to allow for summarizing  
-first_per_chunk <- first_per_chunk %>% 
-  st_drop_geometry() %>% 
-  bind_cols(first_coords)
+  summarise(index = first(index), lat = first(lat), lon = first(lon)))
 
-(last_per_chunk <- clean_legs %>% 
+(last_per_chunk <- clean_legs_non_geom %>% 
   group_by(chunk) %>% 
-  summarise(index = last(index)))
-last_coords <- as.data.frame(st_coordinates(last_per_chunk), colnames = c("lon", "lat"))
-first_last_chunk <- bind_rows(first_per_chunk, last_per_chunk)
+  summarise(index = last(index), lat = last(lat), lon = last(lon)))
+
 ```
 
 
 Start Visualizing
-```{r, fig.width=10, fig.height=8}
+```{r, fig.width=8, fig.height=10}
+
+gradient_right_edge <- -98
+gradient_top_edge <- 48.16291
+gradient_bottom_edge <- 28.92833
+first_last_chunk <- bind_rows(first_per_chunk, last_per_chunk)
+first_last_chunk <- first_last_chunk %>% 
+  mutate(grad_lat = gradient_top_edge - (gradient_top_edge - gradient_bottom_edge) * (index / nrow(clean_legs_non_geom)),
+         grad_lon = gradient_right_edge) %>% 
+  rename(river_lat = lat, river_lon = lon)
+first_last_chunk[c(1,6),c(3,4)] <- first_last_chunk[c(6,1),c(3,4)]
+
+
+line_data <- first_last_chunk %>% 
+  pivot_longer(cols = river_lat:grad_lon, 
+               names_to = c("end", ".value"),
+               names_pattern = "(grad|river)_(lat|lon)") %>% 
+  group_by(index) %>% 
+  group_split() %>% 
+  map(select, lon, lat) %>% 
+  map(as.matrix) %>% 
+  map(st_linestring, dim = "XY") %>% 
+  st_as_sfc(crs = 4326) %>% 
+  st_as_sf() %>% 
+  mutate(chunk = as.character(rep(1:5, each = 2)))
+
 miss_cities <- tibble(name = c("Memphis", "Minneapolis", "New Orleans", "St. Louis", "Baton Rouge", "Davenport"),
                       lat = c(35.1495, 44.9778, 29.9511, 38.6270, 30.4515, 41.5236),
                       lon = c(-90.0490, -93.2650, -90.0715, -90.1994, -91.1871, -90.5776)) %>% 
   st_as_sf(coords = c("lon", "lat"), remove = FALSE, crs = 4326)
 
-bounding_circles <- 
+us_states <- st_as_sf(ne_states(country = "United States of America"))
 
 
 (map <- ggplot() +
+  geom_sf(data = us_states, fill= "#F1F2F4", color = "white") +
   geom_sf(data = miss_basin_rivers_10, color = "light blue") +
   geom_sf(data = filter(miss_basin_rivers_10, name %in% c("Mississippi", "Bayou Lafourche")), size = 1.5, color = "#A9BCCB") +
   geom_sf(data = miss_cities, size = 3) +
@@ -115,25 +140,34 @@ bounding_circles <-
             nudge_x = 0.3, nudge_y = 0.3,
             fontface = "italic",
             color = "grey22") +
-  coord_sf(datum = NA) +
+  geom_sf(data = line_data, color = "gray22", show.legend = FALSE) +
+  geom_sf(data = clean_legs[seq(1, nrow(clean_legs), 30), ], aes(color = heading), alpha = 0.2, size = 2, show.legend = FALSE) +
+  scale_color_viridis(option = "D") +
+  coord_sf(datum = NA, 
+           xlim = c(-105, -80),
+           ylim = c(28.85423, 49.7391)) +
   theme_void())
 
 map
 
-(gradient <- ggplot(clean_legs_non_geom) +
-  geom_tile(aes(x = 0, y = index, fill = heading), width = 1, height = 1, alpha = 0.7) +
-  scale_fill_viridis(option = "C") + 
+(gradient <- clean_legs_non_geom[seq(1, nrow(clean_legs), 30), ] %>% 
+  mutate(index = 1:n()) %>% 
+  ggplot() +
+  geom_tile(aes(x = 0, y = index, fill = heading), width = 1, height = 11, alpha = 0.3) +
+  scale_fill_viridis(option = "D", na.value = "gray85") +
   theme_void() +
   theme(legend.position = "none") +
-  coord_cartesian(ylim = c(1, 25260),
-                  xlim = c(-0.5, 0.5)))
-  
+  coord_cartesian(ylim = c(1, 25260/30),
+                  xlim = c(-0.5, 0.5),
+                  expand = FALSE))
+
 map +
   annotation_custom(ggplotGrob(gradient), 
-                    xmin = -105,
-                    xmax = -102,
-                    ymin = 28.92833,
-                    ymax = 48.16291)
+                    xmin = -100,
+                    xmax = gradient_right_edge,
+                    ymin = gradient_bottom_edge,
+                    ymax = gradient_top_edge)
+
 ```
 
 
