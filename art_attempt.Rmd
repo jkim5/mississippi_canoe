@@ -26,6 +26,8 @@ library(tidyr)
 
 Load in the data
 ```{r}
+final_crs <- 2163
+
 date_time_data <- readr::read_csv("Miss_explore/clean_data/date_time_data.csv")
 clean_legs <- st_read("Miss_explore/clean_data/clean_legs/clean_data_geom.shp") %>% 
   mutate(date_time = date_time_data$date_time)
@@ -95,9 +97,11 @@ clean_legs_non_geom <- clean_legs_non_geom %>%
 
 
 Start Visualizing
-```{r, fig.width=8, fig.height=10}
+```{r, fig.width=4, fig.height=10}
 
-gradient_right_edge <- -98
+map_left_edge <- -98
+
+gradient_right_edge <- -96
 gradient_top_edge <- 48.16291
 gradient_bottom_edge <- 28.92833
 first_last_chunk <- bind_rows(first_per_chunk, last_per_chunk)
@@ -144,11 +148,9 @@ us_states <- st_as_sf(ne_states(country = "United States of America"))
   geom_sf(data = clean_legs[seq(1, nrow(clean_legs), 30), ], aes(color = heading), alpha = 0.2, size = 2, show.legend = FALSE) +
   scale_color_viridis(option = "D") +
   coord_sf(datum = NA, 
-           xlim = c(-105, -80),
+           xlim = c(map_left_edge, -87.5),
            ylim = c(28.85423, 49.7391)) +
   theme_void())
-
-map
 
 (gradient <- clean_legs_non_geom[seq(1, nrow(clean_legs), 30), ] %>% 
   mutate(index = 1:n()) %>% 
@@ -161,13 +163,15 @@ map
                   xlim = c(-0.5, 0.5),
                   expand = FALSE))
 
-map +
+(final_map <- map +
   annotation_custom(ggplotGrob(gradient), 
-                    xmin = -100,
+                    xmin = map_left_edge +1,
                     xmax = gradient_right_edge,
                     ymin = gradient_bottom_edge,
-                    ymax = gradient_top_edge)
+                    ymax = gradient_top_edge))
 
+
+ggsave("test_map.svg", plot = final_map, device = "svg")
 ```
 
 
