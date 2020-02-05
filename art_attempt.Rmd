@@ -26,7 +26,6 @@ library(tidyr)
 
 Load in the data
 ```{r}
-final_crs <- 2163
 
 date_time_data <- readr::read_csv("Miss_explore/clean_data/date_time_data.csv")
 clean_legs <- st_read("Miss_explore/clean_data/clean_legs/clean_data_geom.shp") %>% 
@@ -97,7 +96,7 @@ clean_legs_non_geom <- clean_legs_non_geom %>%
 
 
 Start Visualizing
-```{r, fig.width=4, fig.height=10}
+```{r, fig.width=4, fig.height=10, dev = "svg"}
 
 map_left_edge <- -98
 
@@ -171,7 +170,11 @@ us_states <- st_as_sf(ne_states(country = "United States of America"))
                     ymax = gradient_top_edge))
 
 
-ggsave("test_map.svg", plot = final_map, device = "svg")
+ggsave("test_map.svg", 
+       plot = final_map, 
+       device = "svg",
+       width = 4,
+       height = 10)
 ```
 
 
