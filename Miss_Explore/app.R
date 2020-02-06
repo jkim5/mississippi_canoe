@@ -40,7 +40,13 @@ variable_list <-list(Altitude = "alt",
 
 
 ui <- bootstrapPage(
-  tags$style(type = "text/css", "html, body {width:100%;height:100%}"),
+  tags$head(
+    tags$style(HTML("
+      div.info.legend.leaflet-control br {clear: both;};
+    "))
+  ),
+  
+  tags$style(type = "text/css", "html, body {width:100%;height:100%};"),
   leafletOutput("map", width = "100%", height = "100%"),
   absolutePanel(top = 10, right = 10,
     selectInput("cont_var", "Select Variable",variable_list)
@@ -99,13 +105,20 @@ server <- function(input, output, session) {
     # Use leaflet() here, and only include aspects of the map that
     # won't need to change dynamically (at least, not unless the
     # entire map is being torn down and recreated).
+    
+    css_fix <- "div.info.legend.leaflet-control br {clear: both;}" # CSS to correct spacing
+
     leaflet(miss_basin_simple) %>%
         addProviderTiles(providers$OpenStreetMap.HOT) %>% 
-        addPolygons(fillOpacity = 0, opacity = 0.3)
+        addPolygons(fillOpacity = 0, opacity = 0.3) 
   })
 
   observe({
     unit = units_table$unit[which(units_table$name == input$cont_var)]
+    
+    
+    
+    
     leafletProxy("map", data = tiny_legs) %>% 
       clearMarkers() %>% 
       addCircleMarkers(radius = 4, 
@@ -121,7 +134,7 @@ server <- function(input, output, session) {
         pal = my_pal(), 
         values = ~(eval(parse(text = input$cont_var))),
         title = glue("{names(variable_list)[grep(input$cont_var, variable_list)]} ({unit})")
-      )
+      ) 
   })
   
 

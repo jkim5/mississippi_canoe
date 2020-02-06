@@ -124,9 +124,9 @@ line_data <- first_last_chunk %>%
   st_as_sf() %>% 
   mutate(chunk = as.character(rep(1:5, each = 2)))
 
-miss_cities <- tibble(name = c("Memphis", "Minneapolis", "New Orleans", "St. Louis", "Baton Rouge", "Davenport"),
-                      lat = c(35.1495, 44.9778, 29.9511, 38.6270, 30.4515, 41.5236),
-                      lon = c(-90.0490, -93.2650, -90.0715, -90.1994, -91.1871, -90.5776)) %>% 
+miss_cities <- tibble(name = c("Memphis", "Minneapolis", "New Orleans", "St. Louis", "Baton Rouge"),
+                      lat = c(35.1495, 44.9778, 29.9511, 38.6270, 30.4515),
+                      lon = c(-90.0490, -93.2650, -90.0715, -90.1994, -91.1871)) %>% 
   st_as_sf(coords = c("lon", "lat"), remove = FALSE, crs = 4326)
 
 us_states <- st_as_sf(ne_states(country = "United States of America"))
@@ -142,7 +142,8 @@ us_states <- st_as_sf(ne_states(country = "United States of America"))
             hjust = 0, 
             nudge_x = 0.3, nudge_y = 0.3,
             fontface = "italic",
-            color = "grey22") +
+            color = "grey22",
+            size = 4) +
   geom_sf(data = line_data, color = "gray22", show.legend = FALSE) +
   geom_sf(data = clean_legs[seq(1, nrow(clean_legs), 30), ], aes(color = heading), alpha = 0.2, size = 1.5, show.legend = FALSE) +
   scale_color_viridis(option = "D") +
