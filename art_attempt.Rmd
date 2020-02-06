@@ -134,9 +134,9 @@ us_states <- st_as_sf(ne_states(country = "United States of America"))
 
 (map <- ggplot() +
   geom_sf(data = us_states, fill= "#F1F2F4", color = "white") +
-  geom_sf(data = miss_basin_rivers_10, color = "light blue") +
-  geom_sf(data = filter(miss_basin_rivers_10, name %in% c("Mississippi", "Bayou Lafourche")), size = 1.5, color = "#A9BCCB") +
-  geom_sf(data = miss_cities, size = 3) +
+  geom_sf(data = miss_basin_rivers_10, color = "#b1d3de") +
+  geom_sf(data = filter(miss_basin_rivers_10, name %in% c("Mississippi")), size = 1.5, color = "#85c9de") +
+  geom_sf(data = miss_cities, size = 2) +
   geom_text(data = miss_cities, 
             aes(x = lon, y = lat, label = name),
             hjust = 0, 
@@ -144,7 +144,7 @@ us_states <- st_as_sf(ne_states(country = "United States of America"))
             fontface = "italic",
             color = "grey22") +
   geom_sf(data = line_data, color = "gray22", show.legend = FALSE) +
-  geom_sf(data = clean_legs[seq(1, nrow(clean_legs), 30), ], aes(color = heading), alpha = 0.2, size = 2, show.legend = FALSE) +
+  geom_sf(data = clean_legs[seq(1, nrow(clean_legs), 30), ], aes(color = heading), alpha = 0.2, size = 1.5, show.legend = FALSE) +
   scale_color_viridis(option = "D") +
   coord_sf(datum = NA, 
            xlim = c(map_left_edge, -87.5),
