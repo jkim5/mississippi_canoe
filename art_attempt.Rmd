@@ -91,8 +91,7 @@ clean_legs_non_geom <- st_drop_geometry(clean_legs) %>%
 (last_per_chunk <- clean_legs_non_geom[seq(1, nrow(clean_legs), 30), ] %>% 
   mutate(index = 1:n() + 50*(chunk-1)) %>% 
   group_by(chunk) %>% 
-  summarise(index = last(index), lat = last(lat), lon = last(lon)))
-
+  summarise(index = last(index), lat = last(lat), lon = last(lon))) 
 ```
 
 
@@ -124,10 +123,10 @@ calc_appropriate_lat <- function(index_ratio) {
 
 first_last_chunk <- first_last_chunk %>% 
   mutate(index_ratio = 1-(index-min(index))/(max(index)-1)) %>% 
-  mutate(grad_lat = calc_appropriate_lat(index_ratio)) %>% 
+  mutate(grad_lat = gradient_top_edge - (gradient_top_edge - gradient_bottom_edge) * (1-index_ratio)) %>% 
   mutate(grad_lon = gradient_right_edge) %>% 
-  rename(river_lat = lat, river_lon = lon) #%>% 
-#  select(-index_ratio)
+  rename(river_lat = lat, river_lon = lon) %>% 
+  select(-index_ratio)
 
 first_last_chunk[c(1,6),c(3,4)] <- first_last_chunk[c(6,1),c(3,4)]
 
