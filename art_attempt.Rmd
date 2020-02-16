@@ -35,10 +35,6 @@ tiny_legs = clean_legs[seq(1, nrow(clean_legs), 10), ]
 
 coords <- st_coordinates(clean_legs)
 
-clean_legs_non_geom <- st_drop_geometry(clean_legs) %>% 
-  select(-date_tm) %>% 
-  bind_cols(as.data.frame(coords)) %>% 
-  rename(lat = "Y", lon = "X")
 
 
 miss_basin <- st_read("Miss_explore/clean_data/miss_basin/Miss_RiverBasin.shp") %>% 
@@ -78,17 +74,22 @@ chunk_num <- map(chunk_intervals, function(b, a){a %within% b}, clean_legs$date_
       
       ifelse(length(chunk_num) == 0, NA, chunk_num)
     })
-
-clean_legs_non_geom <- clean_legs_non_geom %>% 
+clean_legs_non_geom <- st_drop_geometry(clean_legs) %>% 
+  select(-date_tm) %>% 
+  bind_cols(as.data.frame(coords)) %>% 
+  rename(lat = "Y", lon = "X") %>% 
   mutate(chunk = chunk_num) %>% 
-  filter(!is.na(chunk))
+  filter(!is.na(chunk)) %>% 
+  mutate(index = index + ((chunk-1)*50))
 
 
-(first_per_chunk <- clean_legs_non_geom %>% 
+(first_per_chunk <- clean_legs_non_geom[seq(1, nrow(clean_legs), 30), ] %>% 
+  mutate(index = 1:n() + 50*(chunk-1)) %>% 
   group_by(chunk) %>% 
   summarise(index = first(index), lat = first(lat), lon = first(lon)))
 
-(last_per_chunk <- clean_legs_non_geom %>% 
+(last_per_chunk <- clean_legs_non_geom[seq(1, nrow(clean_legs), 30), ] %>% 
+  mutate(index = 1:n() + 50*(chunk-1)) %>% 
   group_by(chunk) %>% 
   summarise(index = last(index), lat = last(lat), lon = last(lon)))
 
@@ -104,10 +105,30 @@ gradient_right_edge <- -96
 gradient_top_edge <- 48.16291
 gradient_bottom_edge <- 28.92833
 first_last_chunk <- bind_rows(first_per_chunk, last_per_chunk)
+
+lat_to_y_mercator <- function(lat) {
+  log(tan(lat*pi/180) + 1/cos(lat*pi/180))
+}
+
+grad_top_y <- lat_to_y_mercator(gradient_top_edge)
+grad_bottom_y <- lat_to_y_mercator(gradient_bottom_edge)
+
+
+calc_appropriate_lat <- function(index_ratio) {
+  y = (grad_top_y - grad_bottom_y)*index_ratio + grad_bottom_y
+  atan(sinh(y)) *180/pi
+}
+
+
+
+
 first_last_chunk <- first_last_chunk %>% 
-  mutate(grad_lat = gradient_top_edge - (gradient_top_edge - gradient_bottom_edge) * (index / nrow(clean_legs_non_geom)),
-         grad_lon = gradient_right_edge) %>% 
-  rename(river_lat = lat, river_lon = lon)
+  mutate(index_ratio = 1-(index-min(index))/(max(index)-1)) %>% 
+  mutate(grad_lat = calc_appropriate_lat(index_ratio)) %>% 
+  mutate(grad_lon = gradient_right_edge) %>% 
+  rename(river_lat = lat, river_lon = lon) #%>% 
+#  select(-index_ratio)
+
 first_last_chunk[c(1,6),c(3,4)] <- first_last_chunk[c(6,1),c(3,4)]
 
 
@@ -153,13 +174,13 @@ us_states <- st_as_sf(ne_states(country = "United States of America"))
   theme_void())
 
 (gradient <- clean_legs_non_geom[seq(1, nrow(clean_legs), 30), ] %>% 
-  mutate(index = 1:n()) %>% 
+  mutate(index = 1:n() + 50*(chunk-1)) %>% 
   ggplot() +
-  geom_tile(aes(x = 0, y = index, fill = heading), width = 1, height = 11, alpha = 0.3) +
+  geom_tile(aes(x = 0, y = -index, fill = heading), width = 1, height = 11, alpha = 0.3) +
   scale_fill_viridis(option = "D", na.value = "gray85") +
   theme_void() +
   theme(legend.position = "none") +
-  coord_cartesian(ylim = c(1, 25260/30),
+  coord_cartesian(ylim = -c(1, 1042),
                   xlim = c(-0.5, 0.5),
                   expand = FALSE))
 
