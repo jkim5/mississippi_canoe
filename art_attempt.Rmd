@@ -165,7 +165,7 @@ us_states <- st_as_sf(ne_states(country = "United States of America"))
             color = "grey22",
             size = 4) +
   geom_sf(data = line_data, color = "gray22", show.legend = FALSE) +
-  geom_sf(data = clean_legs[seq(1, nrow(clean_legs), 30), ], aes(color = heading), alpha = 0.2, size = 1.5, show.legend = FALSE) +
+  geom_sf(data = clean_legs[seq(1, nrow(clean_legs), 30), ], aes(color = speed), alpha = 0.2, size = 1.5, show.legend = FALSE) +
   scale_color_viridis(option = "D") +
   coord_sf(datum = NA, 
            xlim = c(map_left_edge, -87.5),
@@ -175,7 +175,7 @@ us_states <- st_as_sf(ne_states(country = "United States of America"))
 (gradient <- clean_legs_non_geom[seq(1, nrow(clean_legs), 30), ] %>% 
   mutate(index = 1:n() + 50*(chunk-1)) %>% 
   ggplot() +
-  geom_tile(aes(x = 0, y = -index, fill = heading), width = 1, height = 11, alpha = 0.3) +
+  geom_tile(aes(x = 0, y = -index, fill = speed), width = 1, height = 11, alpha = 0.3) +
   scale_fill_viridis(option = "D", na.value = "gray85") +
   theme_void() +
   theme(legend.position = "none") +
@@ -191,7 +191,7 @@ us_states <- st_as_sf(ne_states(country = "United States of America"))
                     ymax = gradient_top_edge))
 
 
-ggsave("test_map.svg", 
+ggsave("test_map_2.svg", 
        plot = final_map, 
        device = "svg",
        width = 4,
