@@ -12,8 +12,8 @@ library(shiny)
 library(glue)
 
 
-date_time_data <- readr::read_csv("../Miss_explore/clean_data/date_time_data.csv")
-clean_legs <- st_read("../Miss_explore/clean_data/clean_legs/clean_data_geom.shp") %>% 
+date_time_data <- readr::read_csv("date_time_data.csv")
+clean_legs <- st_read("clean_legs/clean_data_geom.shp") %>% 
   mutate(date_time = date_time_data$date_time)
 
 tiny_legs = clean_legs[seq(1, nrow(clean_legs), 10), ]
@@ -127,7 +127,7 @@ server <- function(input, output) {
                   size = 2.3) +
         geom_sf(data = line_data, color = "gray22", show.legend = FALSE, size = 0.5) +
         geom_sf(data = clean_legs[seq(1, nrow(clean_legs), 30), ], aes(color = !!sym(layer)), alpha = 0.2, size = 0.5, show.legend = TRUE) +
-        scale_color_viridis(option = "D", trans = "asn") +
+        scale_color_viridis(option = "D", trans = "identity") +
         coord_sf(datum = NA, 
                  xlim = c(map_left_edge, -83.5),
                  ylim = c(28.85423, 48.7391)) +
@@ -154,7 +154,7 @@ server <- function(input, output) {
                           ymin = gradient_bottom_edge,
                           ymax = gradient_top_edge) +
         labs(caption = glue("Canoe {layer_formatted}")) +
-        theme(plot.caption = element_text(size=8, hjust = 0.5))
+        theme(plot.caption = element_text(size=10, hjust = 0, color = "grey22"))
     },
     res = 144, type = "cairo")
 }
