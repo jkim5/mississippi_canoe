@@ -55,7 +55,8 @@ clean_legs_non_geom <- st_drop_geometry(clean_legs) %>%
   filter(!is.na(chunk)) %>%
   mutate(index = index + ((chunk-1)*50))
 
-
+small_clean_legs <- clean_legs[seq(1, nrow(clean_legs), 30), ]
+small_clean_legs_non_geom <- clean_legs_non_geom[seq(1, nrow(clean_legs_non_geom), 30), ]
 
 
 map_left_edge <- -98

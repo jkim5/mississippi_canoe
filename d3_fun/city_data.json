@@ -1,0 +1,11 @@
+{
+"type": "FeatureCollection",
+"name": "city_data",
+"features": [
+{ "type": "Feature", "properties": { "name": "Memphis", "lat": 35.1495, "lon": -90.049 }, "geometry": { "type": "Point", "coordinates": [ -90.049, 35.1495 ] } },
+{ "type": "Feature", "properties": { "name": "Minneapolis", "lat": 44.9778, "lon": -93.265 }, "geometry": { "type": "Point", "coordinates": [ -93.265, 44.9778 ] } },
+{ "type": "Feature", "properties": { "name": "New Orleans", "lat": 29.9511, "lon": -90.0715 }, "geometry": { "type": "Point", "coordinates": [ -90.0715, 29.9511 ] } },
+{ "type": "Feature", "properties": { "name": "St. Louis", "lat": 38.627, "lon": -90.1994 }, "geometry": { "type": "Point", "coordinates": [ -90.1994, 38.627 ] } },
+{ "type": "Feature", "properties": { "name": "Baton Rouge", "lat": 30.4515, "lon": -91.1871 }, "geometry": { "type": "Point", "coordinates": [ -91.1871, 30.4515 ] } }
+]
+}
