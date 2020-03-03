@@ -1,33 +1,24 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
-
-/* CSS goes here. */
-.state_data { fill: #eeeeee}
-
-.state_boundary { stroke: #ffffff;
+.state-data { fill: #f4f4f4}
+.state-boundary { stroke: #fff;
                   fill-opacity: 0;
                   stroke-linejoin: round;
-                  stroke-width: 1.5px; }
-
+                  stroke-width: 2px; }
 .river { fill-opacity: 0;
          stroke-linejoin: round;}
-
-.mississippi { stroke: #85C9DE;
+.mississippi { stroke: #95DEF8;
                stroke-width: 2.5px;}
-
-.tributary { stroke: #B8D6E0;
+.tributary { stroke: #C7EBF8;
              stroke-width: 1.3px;}
-
-.canoe_point { fill-opacity: 0.5}
-
+.canoe-point { fill-opacity: 0.5}
 .gradient { fill-opacity: 0.35}
-
-.guide_lines { stroke: #000000;
+.guide-lines { stroke: #999;
                stroke-linecap: round}
-
-.place-label { font-size : 12px;}
-
+.place-label { font-size : 12px;
+               fill: #777;}
+.city { fill: #777;}
 </style>
 <p>
     <select form="display_var" id="display_var" autofocus> 
@@ -49,19 +40,13 @@
     </select> 
 </p>
 <body>
-
-
 <script src="//d3js.org/d3.v4.min.js" charset="utf-8"></script>
 <script src="//d3js.org/topojson.v2.min.js"></script>
 <script src="//d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
 <script src="https://d3js.org/d3-queue.v2.min.js"></script>
 <script src="https://d3js.org/d3-scale.v3.min.js"></script>
 <script src="https://d3js.org/d3-array.v2.min.js"></script>
-
 <script>
-
-
-/* JavaScript goes here. */
     var width = 450,
         height = 800;
 
@@ -70,14 +55,9 @@
         grad_left = 75,
         grad_width = 20;
 
-    var sym_log_transform_vars = ["accel_x", 
-                                  "accel_y",
-                                  "accel_z",
-                                  "gyro_x",
-                                  "gyro_y",
-                                  "gyro_z",
+    var sym_log_transform_vars = ["accel_x", "accel_y", "accel_z",
+                                  "gyro_x", "gyro_y", "gyro_z",
                                   "air_gas"]
-
 
     function index_to_y(index, chunk) {
         return grad_top +((index + 1500*(chunk-1))/(25432 + 1500*4) )*(grad_bottom-grad_top);
@@ -96,14 +76,7 @@
 
     var path = d3.geoPath()
         .projection(projection)
-        .pointRadius(function(d) {
-            if(typeof d.geometry !== "undefined" && 
-               d.geometry.type === "Point") {
-                return 3;
-
-            }
-            return 4;
-        });
+        .pointRadius(3);
 
     d3.queue()
         .defer(d3.json, "miss_basin_data.json")
@@ -117,84 +90,63 @@
                    guide_lines) {
 
         var line = d3.line()
-            .x(function(d) {return d.x})
-            .y(function(d) {return d.y})
+            .x(d => d.x)
+            .y(d => d.y)
 
-        svg.selectAll(".state_data")
-            .data(topojson.feature(miss_basin_data, miss_basin_data.objects.state_data).features)
-            .enter().append("path")
-            .attr("class", "state_data")
-            .attr("fill", function (d) {
-                return "#dddddd";
-            })
+        svg.append("path")
+            .datum(topojson.feature(miss_basin_data, miss_basin_data.objects.state_data))
+            .attr("class", "state-data")
             .attr("d", path);
 
         svg.append("path")
-            .datum(topojson.mesh(miss_basin_data, miss_basin_data.objects.state_data, function(a, b) { return a !== b }))
+            .datum(topojson.mesh(miss_basin_data, miss_basin_data.objects.state_data, (a, b) => a !== b ))
             .attr("d", path)
-            .attr("class", "state_boundary");
+            .attr("class", "state-boundary");
 
 
         svg.selectAll(".river")
             .data(topojson.feature(miss_basin_data, miss_basin_data.objects.miss_basin_rivers_10).features)
-            .enter()
-            .append("path")
+            .enter().append("path")
             .attr("d", path)
-            .attr("class", function(d){
-                var river_name = d.properties.name
-                if(river_name === "Mississippi") {
-                    return "river " + "mississippi";
-                } else {
-                    return "river " + "tributary"
-                }
-            });
-           
+            .attr("class", d => d.properties.name === "Mississippi" ? "river " + "mississippi":"river " + "tributary");
+
         svg.append("path")
             .datum(topojson.feature(miss_basin_data, miss_basin_data.objects.city_data))
             .attr("d", path)
             .attr("class", "city");
 
-        svg.selectAll(".canoe_point")
+        svg.selectAll(".canoe-point")
             .data(topojson.feature(miss_basin_data, miss_basin_data.objects.small_clean_legs).features)
-            .enter()
-            .append("path")
-            .attr("class", "canoe_point")
+            .enter().append("path")
+            .attr("class", "canoe-point")
             .attr("d", path)
-            .attr("fill", function (d) {
-                return colorScale(d.properties.heading);
-            });
+            .attr("fill", d => colorScale(d.properties.heading));
 
         svg.selectAll(".gradient")
             .data(small_clean_legs_non_geom)
             .enter()
             .append("rect") 
             .attr("x", grad_left)
-            .attr("y", function(d) {
-                return index_to_y(parseInt(d.index), parseInt(d.chunk))
-            })
-            .attr("fill", function(d) {
-                return colorScale(d.heading);
-            })
+            .attr("y", d => index_to_y(parseInt(d.index), parseInt(d.chunk)))
+            .attr("fill", d => colorScale(d.heading))
             .attr("width", grad_width)
             .attr("height", 10)
             .attr("class", "gradient");
 
-        svg.selectAll(".guide_lines")
+        svg.selectAll(".guide-lines")
             .data(guide_lines)
-            .enter()
-            .append("path")
-            .attr("class", "guide_lines")
+            .enter().append("path")
+            .attr("class", "guide-lines")
             .attr("d", line)
 
         svg.selectAll(".city-label")
             .data(topojson.feature(miss_basin_data, miss_basin_data.objects.city_data).features)
-            .enter()
-            .append("text")
+            .enter().append("text")
             .attr("class", "place-label")
-            .attr("transform", function(d) {return "translate(" + projection(d.geometry.coordinates) + ")"; })
+            .attr("transform", d => "translate(" + projection(d.geometry.coordinates) + ")")
             .attr("dy", "-0.5em")
             .attr("dx", "0.5em")
-            .text(function(d) { return d.properties.name; });
+            .text(d => d.properties.name);
 
         d3.select("#display_var").on("input", function() {
             update(this.value, small_clean_legs_non_geom);
@@ -202,37 +154,18 @@
     };
 
     function update(value, data) {
-        var median = d3.median(data, function(d) {
-            return parseInt(d[value]);
-        }) 
-        var extent = d3.extent(data, function(d) {
-            return parseInt(d[value]);
-        })
+        var median = d3.median(data, d => parseInt(d[value])); 
+        var extent = d3.extent(data, d => parseInt(d[value]));
 
-
-        if(sym_log_transform_vars.includes(value)) {
-            colorScale = d3.scaleSequentialSymlog(d3.interpolateViridis)
-        .domain(extent);
-        } else {
-            colorScale = d3.scaleSequential(d3.interpolateViridis)
-        .domain(extent);
-        }
-
+        colorScale = sym_log_transform_vars.includes(value) ?
+                        d3.scaleSequentialSymlog(d3.interpolateViridis).domain(extent) :
+                        d3.scaleSequential(d3.interpolateViridis).domain(extent);
 
         svg.selectAll(".gradient")
-            .attr("fill", function(d) {
-                data_value = parseInt(d[value]);
-                return isNaN(data_value) ? 'grey' : colorScale(data_value);
-            })
+            .attr("fill", d => isNaN(parseInt(d[value])) ? 'grey' : colorScale(parseInt(d[value])));
 
-        svg.selectAll(".canoe_point")
-            .attr("fill", function(d) {
-                data_value = parseInt(d.properties[value]);
-                return isNaN(data_value) ? 'grey' : colorScale(data_value);
-            })
+        svg.selectAll(".canoe-point")
+            .attr("fill", d => isNaN(parseInt(d.properties[value])) ? 'grey' : colorScale(parseInt(d.properties[value])));
+
     }
-
-
-
-
 </script>
