@@ -47,13 +47,14 @@
 <script src="https://d3js.org/d3-scale.v3.min.js"></script>
 <script src="https://d3js.org/d3-array.v2.min.js"></script>
 <script>
-    var width = 450,
-        height = 800;
+    var width = 800,
+        height = 600;
 
-    var grad_top = 75,
-        grad_bottom = 725,
-        grad_left = 75,
-        grad_width = 20;
+    var grad_top = 50,
+        grad_bottom = 550,
+        grad_right = 200
+        grad_width = 60,
+        grad_left = grad_right - grad_width;
 
     var sym_log_transform_vars = ["accel_x", "accel_y", "accel_z",
                                   "gyro_x", "gyro_y", "gyro_z",
@@ -71,8 +72,8 @@
         .domain([0, 360])
 
     var projection = d3.geoAlbersUsa()
-        .scale(2000)
-        .translate([width / 4, height / 2]);
+        .scale(1600)
+        .translate([width / 2.5, height / 2]);
 
     var path = d3.geoPath()
         .projection(projection)
@@ -81,17 +82,30 @@
     d3.queue()
         .defer(d3.json, "miss_basin_data.json")
         .defer(d3.csv, "small_clean_legs_non_geom.csv")
-        .defer(d3.json, "guide_lines.json")
+        .defer(d3.csv, "chunk_edges.csv", (d) => {
+                        return {
+                            chunk: +d.chunk,
+                            index: +d.index,
+                            lat: +d.lat,
+                            lon: +d.lon
+                        }})
         .await(ready);
 
     function ready(error, 
                    miss_basin_data, 
                    small_clean_legs_non_geom,
-                   guide_lines) {
+                   chunk_edges) {
 
         var line = d3.line()
             .x(d => d.x)
             .y(d => d.y)
+        
+        guide_lines = [];
+
+        chunk_edges.forEach((value, i) => {
+            guide_lines.push([{x: grad_right, y: index_to_y(value.index, value.chunk) + 5*(i%2)}, 
+                              {x: projection([value.lon, value.lat])[0], y: projection([value.lon, value.lat])[1]}]);
+        });
 
         svg.append("path")
             .datum(topojson.feature(miss_basin_data, miss_basin_data.objects.state_data))
@@ -130,7 +144,7 @@
             .attr("y", d => index_to_y(parseInt(d.index), parseInt(d.chunk)))
             .attr("fill", d => colorScale(d.heading))
             .attr("width", grad_width)
-            .attr("height", 10)
+            .attr("height", 5)
             .attr("class", "gradient");
 
         svg.selectAll(".guide-lines")
