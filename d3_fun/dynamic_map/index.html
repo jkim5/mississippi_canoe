@@ -9,9 +9,21 @@
     integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
     crossorigin=""></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
+    <script src="//d3js.org/d3.v4.min.js" charset="utf-8"></script>
+    <script src="//d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
+    <script src="https://d3js.org/d3-scale.v3.min.js"></script>
     <style>
-        #mapid { height: 600px;
-                 width: 600px; }
+        #mapid { height: 100%;
+                 width: 100%; }
+        html, body {
+            height: 100%;
+        }
+        body{
+            margin-top: 0px; 
+            margin-bottom: 0px; 
+            margin-left: 0px; 
+            margin-right: 0px;
+        }
     </style>
 
 
@@ -23,17 +35,48 @@
 
 <div id="mapid"></div>
 <script>
-    var geojsonLayer = new L.GeoJSON.AJAX("small_clean_legs.geojson");
-    var mymap = L.map('mapid').setView([51.505, -0.09], 13);
+
+    var colorScale = d3.scaleSequential(d3.interpolatePlasma)
+        .domain([0, 360])    
+
+    function geojsonMarkerOptions(feature) {
+        return {
+            fillColor: colorScale(feature.properties.heading),
+            radius: 8,
+            opacity: 0,
+            fillOpacity: 0.3        
+        };
+    }
+
+    function onEachFeature(feature, layer) {
+        var popupContent = "<p>Heading: " +
+            feature.properties.heading + " degrees</p>";
+        layer.bindPopup(popupContent);
+    }
+
+    var geojsonLayer = new L.GeoJSON.AJAX("small_clean_legs.geojson", {
+        onEachFeature: onEachFeature,
+        pointToLayer: function (feature, latlng) {
+            return L.circleMarker(latlng, geojsonMarkerOptions(feature));
+        }
+    });
+
+
+    var mymap = L.map('mapid').setView([44.9375, -93.2010], 4);
     geojsonLayer.addTo(mymap);
-    L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
         maxZoom: 18,
-        id: 'mapbox/streets-v11',
-        tileSize: 512,
-        zoomOffset: -1,
-        accessToken: 'pk.eyJ1IjoiZ3JhaGFtYW1tYWwiLCJhIjoiY2s4dnpybmxwMDk1OTNtbWN5eXQ3NXM3ZyJ9.zMudmCgphj3h4WFT-XKHKg'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
     }).addTo(mymap);
+    
+    // L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+    //     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+    //     maxZoom: 18,
+    //     id: 'mapbox/streets-v11',
+    //     tileSize: 512,
+    //     zoomOffset: -1,
+    //     accessToken: 'pk.eyJ1IjoiZ3JhaGFtYW1tYWwiLCJhIjoiY2s4dnpybmxwMDk1OTNtbWN5eXQ3NXM3ZyJ9.zMudmCgphj3h4WFT-XKHKg'
+    // }).addTo(mymap);
 </script>
 
 
