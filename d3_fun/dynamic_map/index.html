@@ -12,9 +12,57 @@
     <script src="//d3js.org/d3.v4.min.js" charset="utf-8"></script>
     <script src="//d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
     <script src="https://d3js.org/d3-scale.v3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <style>
         #mapid { height: 100%;
-                 width: 100%; }
+                 width: 100%; 
+                 position: absolute;
+                 top: 0;
+                 left: 0;}
+        #legend{ position: absolute;
+                 bottom: 0px;
+                 left: 0px;
+                 height: 90px;
+                 width: 350px;
+                 z-index: 500;
+                 pointer-events: none;
+                 padding: 0px;}
+
+        #visualization{ height: 100%;
+                        width: 100%;
+                        position: relative;}
+
+        #display
+
+        text.label, text.legendTitle{
+            font-family: 'Roboto', sans-serif;
+            fill:#7c7c7c;
+            
+        }
+
+        text.label {
+            font-size: 12px;
+        }
+
+        text.legendTitle {
+            font-size: 16px;            
+        }
+
+        #legend-background{ fill: #F7F6F1;
+                            opacity: .7;
+                            stroke: #C0C0C0;
+                            stroke-width: 3px;}
+
+        #layer-selection{
+            position: absolute;
+            font-family: 'Roboto', sans-serif;
+            top: 20px;
+            right: 20px;
+            z-index: 500;
+
+        }
+
         html, body {
             height: 100%;
         }
@@ -24,16 +72,36 @@
             margin-left: 0px; 
             margin-right: 0px;
         }
+
     </style>
-
-
-
 </head>
 <body>
 
+<div id = "visualization">
+    <div id="layer-selection">
+        <select form="display-var" id="display-var" autofocus> 
+            <option value="alt">Altitude</option> 
+            <option value="speed">Speed</option> 
+            <option value="heading" selected>Heading</option> 
+            <option value="climb">Climb</option> 
+            <option value="accel_x">X Acceleration</option>
+            <option value="accel_y">Y Acceleration</option> 
+            <option value="accel_z">Z Acceleration</option> 
+            <option value="gyro_x">X Gyroscope</option> 
+            <option value="gyro_y">Y Gyroscope</option> 
+            <option value="gyro_z">Z Gyroscope</option> 
+            <option value="air_tmp">Air Temperature</option> 
+            <option value="air_gas">Air Gas</option> 
+            <option value="air_hmd">Air Humidity</option> 
+            <option value="ar_prss">Air Pressure</option> 
+            <option value="wtr_tmp">Water Temperature</option> 
+        </select> 
+    </div>
+    <div id="legend"></div>
+    <div id="mapid"></div>
 
+</div>
 
-<div id="mapid"></div>
 <script>
 
     var colorScale = d3.scaleSequential(d3.interpolatePlasma)
@@ -42,9 +110,9 @@
     function geojsonMarkerOptions(feature) {
         return {
             fillColor: colorScale(feature.properties.heading),
-            radius: 8,
+            radius: 5,
             opacity: 0,
-            fillOpacity: 0.3        
+            fillOpacity: 0.6      
         };
     }
 
@@ -54,7 +122,7 @@
         layer.bindPopup(popupContent);
     }
 
-    var geojsonLayer = new L.GeoJSON.AJAX("small_clean_legs.geojson", {
+    var geojsonLayer = new L.GeoJSON.AJAX("tiny_legs.geojson", {
         onEachFeature: onEachFeature,
         pointToLayer: function (feature, latlng) {
             return L.circleMarker(latlng, geojsonMarkerOptions(feature));
@@ -69,14 +137,36 @@
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>'
     }).addTo(mymap);
     
-    // L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-    //     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-    //     maxZoom: 18,
-    //     id: 'mapbox/streets-v11',
-    //     tileSize: 512,
-    //     zoomOffset: -1,
-    //     accessToken: 'pk.eyJ1IjoiZ3JhaGFtYW1tYWwiLCJhIjoiY2s4dnpybmxwMDk1OTNtbWN5eXQ3NXM3ZyJ9.zMudmCgphj3h4WFT-XKHKg'
-    // }).addTo(mymap);
+    const svg = d3.select("#legend").append("svg")
+        .attr("width", "100%")
+        .attr("height", "100%");
+
+    
+    svg.append("rect")
+        .attr("id", "legend-background")
+        .attr("width", "100%")
+        .attr("height", "100%")
+
+    svg.append("g")
+        .attr("class", "legendLinear")
+        .attr("transform", "translate(25,25)");
+   
+    var legendLinear = d3.legendColor()
+        .shapeWidth(30)
+        .shapeHeight(10)
+        .shapePadding(0)
+        .labelFormat(d3.format(".0f"))
+        .labelAlign("middle")
+        .cells(10)
+        .title("Heading")
+        .orient('horizontal')
+        .scale(colorScale);
+
+    svg.select(".legendLinear")
+        .call(legendLinear);
+
+
+
 </script>
 
 
