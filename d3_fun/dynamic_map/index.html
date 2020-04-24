@@ -9,10 +9,14 @@
     integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
     crossorigin=""></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
-    <script src="//d3js.org/d3.v4.min.js" charset="utf-8"></script>
+    <script src="//d3js.org/d3.v5.js" charset="utf-8"></script>
     <script src="//d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
     <script src="https://d3js.org/d3-scale.v3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+    <script src="leaflet.active-layers.min.js"></script>
+    <script src="leaflet.select-layers.min.js"></script>
+    <script src="d3.color-legend.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
     <style>
         #mapid { height: 100%;
@@ -29,6 +33,12 @@
                  pointer-events: none;
                  padding: 0px;}
 
+        #display-var-holder{ position: absolute;
+                             z-index: 500;
+                             padding: 0px;
+                             right: 20px;
+                             top: 20px;}
+
         #visualization{ height: 100%;
                         width: 100%;
                         position: relative;}
@@ -42,7 +52,7 @@
         }
 
         text.label {
-            font-size: 12px;
+            font-size: 14px;
         }
 
         text.legendTitle {
@@ -60,7 +70,6 @@
             top: 20px;
             right: 20px;
             z-index: 500;
-
         }
 
         html, body {
@@ -78,7 +87,7 @@
 <body>
 
 <div id = "visualization">
-    <div id="layer-selection">
+    <div id = "display-var-holder">
         <select form="display-var" id="display-var" autofocus> 
             <option value="alt">Altitude</option> 
             <option value="speed">Speed</option> 
@@ -104,8 +113,35 @@
 
 <script>
 
-    var colorScale = d3.scaleSequential(d3.interpolatePlasma)
-        .domain([0, 360])    
+    var colorScale = d3.scaleSequential(d3.interpolateViridis)
+        .domain([0, 360]);   
+
+    var var_extent = {
+        "alt":[-24.3,489.9],
+        "speed":[0,4.116],
+        "heading":[0,357.42],
+        "climb":[-1.8,1.6],
+        "accel_x":[-9.935,3.429],
+        "accel_y":[-3.973,9.986],
+        "accel_z":[-1.163,10.137],
+        "gyro_x":[-51.109,18.778],
+        "gyro_y":[-3.802,57.064],
+        "gyro_z":[-10.605,28.285],
+        "air_tmp":[9.342,53.427],
+        "air_gas":[45556,5809935],
+        "air_hmd":[22.860,74.023],
+        "ar_prss":[963.327,1030.088],
+        "wtr_tmp":[8.25,27.312]
+    };
+    
+    var sym_log_transform_vars = ["accel_x", "accel_y", "accel_z",
+                                  "gyro_x", "gyro_y", "gyro_z",
+                                  "air_gas"];
+
+
+    function ready(error, var_extent) {
+        console.log(var_extent);
+    }
 
     function geojsonMarkerOptions(feature) {
         return {
@@ -124,8 +160,9 @@
 
     var geojsonLayer = new L.GeoJSON.AJAX("tiny_legs.geojson", {
         onEachFeature: onEachFeature,
+        style: geojsonMarkerOptions,
         pointToLayer: function (feature, latlng) {
-            return L.circleMarker(latlng, geojsonMarkerOptions(feature));
+            return L.circleMarker(latlng);
         }
     });
 
@@ -165,6 +202,36 @@
     svg.select(".legendLinear")
         .call(legendLinear);
 
+    d3.select("#display-var").on("input", function() {
+        update(this.value);
+    })
+
+    svg.append("g")
+      .attr("transform", "translate(25,25)")
+      .append(() => legend({color: colorScale, title: "test", width: 300}));
+
+    function update(value) {
+        console.log(var_extent);
+        var newScale = sym_log_transform_vars.includes(value) ?
+                        d3.scaleSequentialSymlog(d3.interpolateViridis).domain(var_extent[value]) :
+                        d3.scaleSequential(d3.interpolateViridis).domain(var_extent[value]);
+
+        function newMarkerStyle(feature) {
+            return {
+                fillColor: newScale(feature.properties[value]),
+                radius: 5,
+                opacity: 0,
+                fillOpacity: 0.6      
+            };
+        }
+
+        legendLinear.scale(newScale);
+
+        svg.select(".legendLinear")
+            .call(legendLinear);
+
+        geojsonLayer.setStyle(newMarkerStyle);
+    }
 
 
 </script>

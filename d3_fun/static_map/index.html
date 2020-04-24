@@ -58,7 +58,7 @@
 
     var sym_log_transform_vars = ["accel_x", "accel_y", "accel_z",
                                   "gyro_x", "gyro_y", "gyro_z",
-                                  "air_gas"]
+                                  "air_gas"];
 
     function index_to_y(index, chunk) {
         return grad_top +((index + 1500*(chunk-1))/(25432 + 1500*4) )*(grad_bottom-grad_top);
