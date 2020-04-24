@@ -160,7 +160,7 @@
 
     function geojsonMarkerOptions(feature) {
         return {
-            fillColor: colorScale(feature.properties.heading),
+            fillColor: feature.properties.heading == null ? 'grey' : colorScale(feature.properties.heading),
             radius: 5,
             opacity: 0,
             fillOpacity: 0.6      
@@ -202,14 +202,13 @@
 
 
     function update(value) {
-        console.log(var_extent);
         var newScale = sym_log_transform_vars.includes(value) ?
                         d3.scaleSequentialSymlog(d3.interpolateViridis).domain(var_extent[value]) :
                         d3.scaleSequential(d3.interpolateViridis).domain(var_extent[value]);
 
         function newMarkerStyle(feature) {
             return {
-                fillColor: newScale(feature.properties[value]),
+                fillColor: feature.properties[value] == null ? 'grey' : newScale(feature.properties[value]),
                 radius: 5,
                 opacity: 0,
                 fillOpacity: 0.6      
