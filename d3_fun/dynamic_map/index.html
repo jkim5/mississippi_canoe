@@ -43,16 +43,18 @@
                         width: 100%;
                         position: relative;}
 
-        #display
-
-        text.label, text.legendTitle{
+        g.legend-scale text{
             font-family: 'Roboto', sans-serif;
             fill:#7c7c7c;
-            
+            font-size: 13px;
         }
 
-        text.label {
-            font-size: 14px;
+        g.tick text{
+            font-size: 11px;
+        }
+
+        g.tick line{
+            stroke: #7c7c7c;
         }
 
         text.legendTitle {
@@ -117,31 +119,44 @@
         .domain([0, 360]);   
 
     var var_extent = {
-        "alt":[-24.3,489.9],
-        "speed":[0,4.116],
-        "heading":[0,357.42],
-        "climb":[-1.8,1.6],
-        "accel_x":[-9.935,3.429],
-        "accel_y":[-3.973,9.986],
-        "accel_z":[-1.163,10.137],
-        "gyro_x":[-51.109,18.778],
-        "gyro_y":[-3.802,57.064],
-        "gyro_z":[-10.605,28.285],
-        "air_tmp":[9.342,53.427],
-        "air_gas":[45556,5809935],
-        "air_hmd":[22.860,74.023],
-        "ar_prss":[963.327,1030.088],
-        "wtr_tmp":[8.25,27.312]
+        "alt":[-100,500],
+        "speed":[0,4.5],
+        "heading":[0,360],
+        "climb":[-2,2],
+        "accel_x":[-10,5],
+        "accel_y":[-5,10],
+        "accel_z":[-2,12],
+        "gyro_x":[-60,20],
+        "gyro_y":[-5,60],
+        "gyro_z":[-15,30],
+        "air_tmp":[0,55],
+        "air_gas":[45000,6000000],
+        "air_hmd":[20,80],
+        "ar_prss":[950,1050],
+        "wtr_tmp":[5,30]
+    };
+
+    var clean_names = {
+        "alt":"Altitude",
+        "speed":"Speed",
+        "heading":"Heading",
+        "climb":"Climb",
+        "accel_x":"X Acceleration",
+        "accel_y":"Y Acceleration",
+        "accel_z":"Z Acceleration",
+        "gyro_x":"X Gyroscope",
+        "gyro_y":"Y Gyroscope",
+        "gyro_z":"Z Gyroscope",
+        "air_tmp":"Air Temperature",
+        "air_gas":"Air Gas",
+        "air_hmd":"Air Humidity",
+        "ar_prss":"Air Pressure",
+        "wtr_tmp":"Water Temperature"
     };
     
     var sym_log_transform_vars = ["accel_x", "accel_y", "accel_z",
                                   "gyro_x", "gyro_y", "gyro_z",
                                   "air_gas"];
-
-
-    function ready(error, var_extent) {
-        console.log(var_extent);
-    }
 
     function geojsonMarkerOptions(feature) {
         return {
@@ -152,20 +167,12 @@
         };
     }
 
-    function onEachFeature(feature, layer) {
-        var popupContent = "<p>Heading: " +
-            feature.properties.heading + " degrees</p>";
-        layer.bindPopup(popupContent);
-    }
-
     var geojsonLayer = new L.GeoJSON.AJAX("tiny_legs.geojson", {
-        onEachFeature: onEachFeature,
         style: geojsonMarkerOptions,
         pointToLayer: function (feature, latlng) {
             return L.circleMarker(latlng);
         }
     });
-
 
     var mymap = L.map('mapid').setView([44.9375, -93.2010], 4);
     geojsonLayer.addTo(mymap);
@@ -177,38 +184,22 @@
     const svg = d3.select("#legend").append("svg")
         .attr("width", "100%")
         .attr("height", "100%");
-
     
     svg.append("rect")
         .attr("id", "legend-background")
         .attr("width", "100%")
         .attr("height", "100%")
-
-    svg.append("g")
-        .attr("class", "legendLinear")
-        .attr("transform", "translate(25,25)");
    
-    var legendLinear = d3.legendColor()
-        .shapeWidth(30)
-        .shapeHeight(10)
-        .shapePadding(0)
-        .labelFormat(d3.format(".0f"))
-        .labelAlign("middle")
-        .cells(10)
-        .title("Heading")
-        .orient('horizontal')
-        .scale(colorScale);
-
-    svg.select(".legendLinear")
-        .call(legendLinear);
-
     d3.select("#display-var").on("input", function() {
         update(this.value);
     })
 
     svg.append("g")
       .attr("transform", "translate(25,25)")
-      .append(() => legend({color: colorScale, title: "test", width: 300}));
+      .attr("class", "legend-scale")
+      .append(() => legend({color: colorScale, title: "Heading", width: 300}))
+      .attr("class", "legend-scale");
+
 
     function update(value) {
         console.log(var_extent);
@@ -225,10 +216,15 @@
             };
         }
 
-        legendLinear.scale(newScale);
+        d3.select(".legend-scale")
+            .remove()
+        
+        svg.append("g")
+            .attr("transform", "translate(25,25)")
+            .attr("class", "legend-scale")
+            .append(() => legend({color: newScale, title: clean_names[value], width: 300}))
+            .attr("class", "legend-scale");
 
-        svg.select(".legendLinear")
-            .call(legendLinear);
 
         geojsonLayer.setStyle(newMarkerStyle);
     }
