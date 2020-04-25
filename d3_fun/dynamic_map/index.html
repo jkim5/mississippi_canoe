@@ -46,7 +46,8 @@
         g.legend-scale text{
             font-family: 'Roboto', sans-serif;
             fill:#7c7c7c;
-            font-size: 13px;
+            font-size: 14px;
+            font-weight: normal;
         }
 
         g.tick text{
@@ -102,7 +103,7 @@
             <option value="gyro_y">Y Gyroscope</option> 
             <option value="gyro_z">Z Gyroscope</option> 
             <option value="air_tmp">Air Temperature</option> 
-            <option value="air_gas">Air Gas</option> 
+            <option value="air_gas">VOCs</option> 
             <option value="air_hmd">Air Humidity</option> 
             <option value="ar_prss">Air Pressure</option> 
             <option value="wtr_tmp">Water Temperature</option> 
@@ -131,27 +132,27 @@
         "gyro_z":[-15,30],
         "air_tmp":[0,55],
         "air_gas":[45000,6000000],
-        "air_hmd":[20,80],
+        "air_hmd":[0,100],
         "ar_prss":[950,1050],
-        "wtr_tmp":[5,30]
+        "wtr_tmp":[0,30]
     };
 
     var clean_names = {
-        "alt":"Altitude",
-        "speed":"Speed",
-        "heading":"Heading",
-        "climb":"Climb",
-        "accel_x":"X Acceleration",
-        "accel_y":"Y Acceleration",
-        "accel_z":"Z Acceleration",
-        "gyro_x":"X Gyroscope",
-        "gyro_y":"Y Gyroscope",
-        "gyro_z":"Z Gyroscope",
-        "air_tmp":"Air Temperature",
-        "air_gas":"Air Gas",
-        "air_hmd":"Air Humidity",
-        "ar_prss":"Air Pressure",
-        "wtr_tmp":"Water Temperature"
+        "alt":"Altitude (m)",
+        "speed":"Speed (m/s)",
+        "heading":"Heading (degrees)",
+        "climb":"Climb (m/s)",
+        "accel_x":"X Acceleration (m/s^2)",
+        "accel_y":"Y Acceleration (m/s^2)",
+        "accel_z":"Z Acceleration (m/s^2)",
+        "gyro_x":"X Gyroscope (degrees/s)",
+        "gyro_y":"Y Gyroscope (degrees/s)",
+        "gyro_z":"Z Gyroscope (degrees/s)",
+        "air_tmp":"Air Temperature (C)",
+        "air_gas":"VOCs (Ohm)",
+        "air_hmd":"Air Humidity (%)",
+        "ar_prss":"Air Pressure (hPa)",
+        "wtr_tmp":"Water Temperature (C)"
     };
     
     var sym_log_transform_vars = ["accel_x", "accel_y", "accel_z",
@@ -218,10 +219,12 @@
         d3.select(".legend-scale")
             .remove()
         
+        console.log(value === "air_gas");
+
         svg.append("g")
             .attr("transform", "translate(25,25)")
             .attr("class", "legend-scale")
-            .append(() => legend({color: newScale, title: clean_names[value], width: 300}))
+            .append(() => legend({color: newScale, title: clean_names[value], width: 300, tickFormat: (value === "air_gas" ? d3.format(".2s") : null), ticks: 4}))
             .attr("class", "legend-scale");
 
 
