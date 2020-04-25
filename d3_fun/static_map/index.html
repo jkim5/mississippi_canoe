@@ -1,79 +1,159 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
-.state-data { fill: #f4f4f4}
-.state-boundary { stroke: #fff;
-                  fill-opacity: 0;
-                  stroke-linejoin: round;
-                  stroke-width: 2px; }
-.river { fill-opacity: 0;
-         stroke-linejoin: round;}
-.mississippi { stroke: #95DEF8;
-               stroke-width: 2.5px;}
-.tributary { stroke: #C7EBF8;
-             stroke-width: 1.3px;}
-.canoe-point { fill-opacity: 0.5}
-.gradient { fill-opacity: 0.35}
-.guide-lines { stroke: #999;
-               stroke-linecap: round}
-.place-label { font-size : 12px;
-               fill: #777;}
-.city { fill: #777;}
+    .state-data { fill: #f4f4f4}
+    .state-boundary { stroke: #fff;
+                    fill-opacity: 0;
+                    stroke-linejoin: round;
+                    stroke-width: 2px; }
+    .river { fill-opacity: 0;
+            stroke-linejoin: round;
+            stroke-linecap: round;}
+    .mississippi { stroke: #95DEF8;
+                stroke-width: 2.5px;
+                stroke-linecap: round;}
+    .tributary { stroke: #C7EBF8;
+                stroke-width: 1.3px;}
+    .canoe-point { fill-opacity: 0.5}
+    .gradient { fill-opacity: 0.35}
+    .guide-lines { stroke: #999;
+                stroke-linecap: round}
+    .place-label { font-family: 'Roboto', sans-serif;
+                   font-size : 12px;
+                   fill: #777;}
+    .city { fill: #777;}
+
+    g.legend-scale text{ font-family: 'Roboto', sans-serif;
+                         fill:#777;
+                         font-size: 14px;
+                         font-weight: normal;}
+
+            g.tick text{ font-size: 11px;}
+
+            g.tick line{ stroke: #777;}
+
+    canvas { width: 0px;
+             height: 0px;}
+
+    #visualization { width: 800px;
+                    height: 600px;
+                    position: relative;
+                    top: 0;
+                    left: 0;}
+
+    #display-var-holder { right: 100px;
+                          top: 30px;
+                          position: absolute;
+                          z-index: 500;}
+
+    #map { position: absolute;
+           top: 0;
+           left: 0;
+           width: 100%;
+           height: 100%;
+           z-index: 0;}
+
+    body { width: 800px;
+           height: 600px;}
+
 </style>
-<p>
-    <select form="display_var" id="display_var" autofocus> 
-        <option value="alt">Altitude</option> 
-        <option value="speed">Speed</option> 
-        <option value="heading" selected>Heading</option> 
-        <option value="climb">Climb</option> 
-        <option value="accel_x">X Acceleration</option>
-        <option value="accel_y">Y Acceleration</option> 
-        <option value="accel_z">Z Acceleration</option> 
-        <option value="gyro_x">X Gyroscope</option> 
-        <option value="gyro_y">Y Gyroscope</option> 
-        <option value="gyro_z">Z Gyroscope</option> 
-        <option value="air_tmp">Air Temperature</option> 
-        <option value="air_gas">Air Gas</option> 
-        <option value="air_hmd">Air Humidity</option> 
-        <option value="ar_prss">Air Pressure</option> 
-        <option value="wtr_tmp">Water Temperature</option> 
-    </select> 
-</p>
+
 <body>
+    <div id = "visualization">
+        <div id = "display-var-holder">
+            <select form="display-var" id="display-var" autofocus> 
+                <option value="alt">Altitude</option> 
+                <option value="speed">Speed</option> 
+                <option value="heading" selected>Heading</option> 
+                <option value="climb">Climb</option> 
+                <option value="accel_x">X Acceleration</option>
+                <option value="accel_y">Y Acceleration</option> 
+                <option value="accel_z">Z Acceleration</option> 
+                <option value="gyro_x">X Gyroscope</option> 
+                <option value="gyro_y">Y Gyroscope</option> 
+                <option value="gyro_z">Z Gyroscope</option> 
+                <option value="air_tmp">Air Temperature</option> 
+                <option value="air_gas">VOCs</option> 
+                <option value="air_hmd">Air Humidity</option> 
+                <option value="ar_prss">Air Pressure</option> 
+                <option value="wtr_tmp">Water Temperature</option> 
+            </select> 
+        </div>
+        <div id = "map"></div>
+    </div>
+    
+
 <script src="//d3js.org/d3.v4.min.js" charset="utf-8"></script>
 <script src="//d3js.org/topojson.v2.min.js"></script>
 <script src="//d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
 <script src="https://d3js.org/d3-queue.v2.min.js"></script>
 <script src="https://d3js.org/d3-scale.v3.min.js"></script>
 <script src="https://d3js.org/d3-array.v2.min.js"></script>
+<script src="d3.color-legend.js"></script>
 <script>
     var width = 800,
         height = 600;
 
     var grad_top = 50,
-        grad_bottom = 550,
+        grad_bottom = 520,
         grad_right = 200
-        grad_width = 60,
+        grad_width = 50,
         grad_left = grad_right - grad_width;
 
     var sym_log_transform_vars = ["accel_x", "accel_y", "accel_z",
                                   "gyro_x", "gyro_y", "gyro_z",
                                   "air_gas"];
 
+    var var_extent = {
+        "alt":[-100,500],
+        "speed":[0,4.5],
+        "heading":[0,360],
+        "climb":[-2,2],
+        "accel_x":[-10,5],
+        "accel_y":[-5,10],
+        "accel_z":[-2,12],
+        "gyro_x":[-60,20],
+        "gyro_y":[-5,60],
+        "gyro_z":[-15,30],
+        "air_tmp":[0,55],
+        "air_gas":[45000,6000000],
+        "air_hmd":[0,100],
+        "ar_prss":[950,1050],
+        "wtr_tmp":[0,30]
+    };
+    
+    var clean_names = {
+        "alt":"Altitude (m)",
+        "speed":"Speed (m/s)",
+        "heading":"Heading (degrees)",
+        "climb":"Climb (m/s)",
+        "accel_x":"X Acceleration (m/s^2)",
+        "accel_y":"Y Acceleration (m/s^2)",
+        "accel_z":"Z Acceleration (m/s^2)",
+        "gyro_x":"X Gyroscope (degrees/s)",
+        "gyro_y":"Y Gyroscope (degrees/s)",
+        "gyro_z":"Z Gyroscope (degrees/s)",
+        "air_tmp":"Air Temperature (C)",
+        "air_gas":"VOCs (Ohm)",
+        "air_hmd":"Air Humidity (%)",
+        "ar_prss":"Air Pressure (hPa)",
+        "wtr_tmp":"Water Temperature (C)"
+    };
+
     function index_to_y(index, chunk) {
         return grad_top +((index + 1500*(chunk-1))/(25432 + 1500*4) )*(grad_bottom-grad_top);
     }
 
-    var svg = d3.select("body").append("svg")
+    var svg = d3.select("#map").append("svg")
         .attr("width", width)
         .attr("height", height);
     
     var colorScale = d3.scaleSequential(d3.interpolateViridis)
         .domain([0, 360])
 
-    var projection = d3.geoAlbersUsa()
-        .scale(1600)
-        .translate([width / 2.5, height / 2]);
+    var projection = d3.geoAlbers()
+        .scale(1400)
+        .translate([width / 2.5, height / 2.2]);
 
     var path = d3.geoPath()
         .projection(projection)
@@ -162,24 +242,36 @@
             .attr("dx", "0.5em")
             .text(d => d.properties.name);
 
-        d3.select("#display_var").on("input", function() {
+        svg.append("g")
+            .attr("transform", "translate(335,540)")
+            .attr("class", "legend-scale")
+            .append(() => legend({color: colorScale, title: "Heading", width: 300}))
+            .attr("class", "legend-scale");
+
+        d3.select("#display-var").on("input", function() {
             update(this.value, small_clean_legs_non_geom);
         })
     };
 
     function update(value, data) {
-        var median = d3.median(data, d => parseInt(d[value])); 
-        var extent = d3.extent(data, d => parseInt(d[value]));
-
         colorScale = sym_log_transform_vars.includes(value) ?
-                        d3.scaleSequentialSymlog(d3.interpolateViridis).domain(extent) :
-                        d3.scaleSequential(d3.interpolateViridis).domain(extent);
+                        d3.scaleSequentialSymlog(d3.interpolateViridis).domain(var_extent[value]) :
+                        d3.scaleSequential(d3.interpolateViridis).domain(var_extent[value]);
 
         svg.selectAll(".gradient")
             .attr("fill", d => isNaN(parseInt(d[value])) ? 'grey' : colorScale(parseInt(d[value])));
 
         svg.selectAll(".canoe-point")
             .attr("fill", d => isNaN(parseInt(d.properties[value])) ? 'grey' : colorScale(parseInt(d.properties[value])));
+
+        d3.select(".legend-scale")
+            .remove()
+        
+        svg.append("g")
+            .attr("transform", "translate(335,540)")
+            .attr("class", "legend-scale")
+            .append(() => legend({color: colorScale, title: clean_names[value], width: 300, tickFormat: (value === "air_gas" ? d3.format(".2s") : null), ticks: 4}))
+            .attr("class", "legend-scale");
 
     }
 </script>
