@@ -160,7 +160,7 @@
         .pointRadius(3);
 
     d3.queue()
-        .defer(d3.json, "miss_basin_data.json")
+        .defer(d3.json, "miss_basin_data_simplified.json")
         .defer(d3.csv, "small_clean_legs_non_geom.csv")
         .defer(d3.csv, "chunk_edges.csv", (d) => {
                         return {
@@ -188,18 +188,18 @@
         });
 
         svg.append("path")
-            .datum(topojson.feature(miss_basin_data, miss_basin_data.objects.state_data))
+            .datum(topojson.feature(miss_basin_data, miss_basin_data.objects.state_data_simplified))
             .attr("class", "state-data")
             .attr("d", path);
 
         svg.append("path")
-            .datum(topojson.mesh(miss_basin_data, miss_basin_data.objects.state_data, (a, b) => a !== b ))
+            .datum(topojson.mesh(miss_basin_data, miss_basin_data.objects.state_data_simplified, (a, b) => a !== b ))
             .attr("d", path)
             .attr("class", "state-boundary");
 
 
         svg.selectAll(".river")
-            .data(topojson.feature(miss_basin_data, miss_basin_data.objects.miss_basin_rivers_10).features)
+            .data(topojson.feature(miss_basin_data, miss_basin_data.objects.miss_basin_rivers_10_simplified).features)
             .enter().append("path")
             .attr("d", path)
             .attr("class", d => d.properties.name === "Mississippi" ? "river " + "mississippi":"river " + "tributary");
