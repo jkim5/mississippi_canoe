@@ -187,6 +187,11 @@
                               {x: projection([value.lon, value.lat])[0], y: projection([value.lon, value.lat])[1]}]);
         });
 
+        svg.append("rect")
+            .attr("width", "100%")
+            .attr("height", "100%")
+            .attr("fill", "#8c8c8c")
+        
         svg.append("path")
             .datum(topojson.feature(miss_basin_data, miss_basin_data.objects.state_data_simplified))
             .attr("class", "state-data")
