@@ -35,8 +35,8 @@
     canvas { width: 0px;
              height: 0px;}
 
-    #visualization { width: 100%;
-                    height: 100%;
+    #visualization { width: 800;
+                    height: 600;
                     position: relative;
                     top: 0;
                     left: 0;}
@@ -49,12 +49,12 @@
     #map { position: absolute;
            top: 0;
            left: 0;
-           width: 100%;
-           height: 100%;
+           width: 800;
+           height: 600;
            z-index: 0;}
 
-    body { width: 100%;
-           height: 100%;}
+    body { width: 800;
+           height: 600;}
 
 </style>
 
@@ -91,8 +91,8 @@
 <script src="https://d3js.org/d3-array.v2.min.js"></script>
 <script src="d3.color-legend.js"></script>
 <script>
-    var width = 100%,
-        height = 100%;
+    var width = 800,
+        height = 600;
 
     var grad_top = 50,
         grad_bottom = 520,
@@ -188,8 +188,8 @@
         });
 
         svg.append("rect")  // background
-            .attr("width", "100%")
-            .attr("height", "100%")
+            .attr("width", "800")
+            .attr("height", "600")
             .attr("fill", "#c1c1c1")
         
         svg.append("path")
