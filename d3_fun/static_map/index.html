@@ -145,7 +145,7 @@
     }
 
     var svg = d3.select("#map").append("svg")
-         attr("viewBox", "0 0 1000 750")
+        .attr("viewBox", "0 0 1000 750")
         .attr("preserveAspectRatio", "xMidYMid meet");  
         
     var colorScale = d3.scaleSequential(d3.interpolateViridis)
