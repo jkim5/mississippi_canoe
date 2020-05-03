@@ -91,8 +91,8 @@
 <script src="https://d3js.org/d3-array.v2.min.js"></script>
 <script src="d3.color-legend.js"></script>
 <script>
-    var width = window.innerWidth,
-        height = window.innerHeight;
+    var width = 800,
+        height = 600;
 
     var grad_top = 50,
         grad_bottom = 520,
@@ -153,7 +153,7 @@
 
     var projection = d3.geoAlbers()
         .scale(1400)
-        .translate([width / 2.5, height / 2.2]);
+        .translate([width / 2, height / 2.2]);
 
     var path = d3.geoPath()
         .projection(projection)
