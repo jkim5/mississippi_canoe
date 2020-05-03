@@ -273,7 +273,7 @@
             .remove()
         
         svg.append("g")
-            .attr("transform", "translate(335,600)")
+            .attr("transform", "translate(335,540)")
             .attr("class", "legend-scale")
             .append(() => legend({color: colorScale, title: clean_names[value], width: 300, tickFormat: (value === "air_gas" ? d3.format(".2s") : null), ticks: 4}))
             .attr("class", "legend-scale");
