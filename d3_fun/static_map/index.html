@@ -91,8 +91,8 @@
 <script src="https://d3js.org/d3-array.v2.min.js"></script>
 <script src="d3.color-legend.js"></script>
 <script>
-    var width = 800,
-        height = 600;
+    var width = window.innerWidth,
+        height = window.innerHeight;
 
     var grad_top = 50,
         grad_bottom = 520,
@@ -273,7 +273,7 @@
             .remove()
         
         svg.append("g")
-//            .attr("transform", "translate(335,540)")
+            .attr("transform", "translate(335,540)")
             .attr("class", "legend-scale")
             .append(() => legend({color: colorScale, title: clean_names[value], width: 300, tickFormat: (value === "air_gas" ? d3.format(".2s") : null), ticks: 4}))
             .attr("class", "legend-scale");
