@@ -94,7 +94,7 @@
     var width = window.innerWidth,
         height = window.innerHeight;
 
-    var grad_top = 50,
+    var grad_top = 100,
         grad_bottom = 520,
         grad_right = 200
         grad_width = 50,
@@ -153,7 +153,7 @@
 
     var projection = d3.geoAlbers()
         .scale(1400)
-        .translate([width / 2.25, height / 2.6]);
+        .translate([width / 1.6, height / 2.1]);
 
     var path = d3.geoPath()
         .projection(projection)
@@ -248,7 +248,7 @@
             .text(d => d.properties.name);
 
         svg.append("g")
-            .attr("transform", "translate(335,625)")
+            .attr("transform", "translate(10,10)")
             .attr("class", "legend-scale")
             .append(() => legend({color: colorScale, title: "Heading", width: 300}))
             .attr("class", "legend-scale");
@@ -274,7 +274,7 @@
             .remove()
         
         svg.append("g")
-            .attr("transform", "translate(335,540)")
+            .attr("transform", "translate(10,10)")
             .attr("class", "legend-scale")
             .append(() => legend({color: colorScale, title: clean_names[value], width: 300, tickFormat: (value === "air_gas" ? d3.format(".2s") : null), ticks: 4}))
             .attr("class", "legend-scale");
