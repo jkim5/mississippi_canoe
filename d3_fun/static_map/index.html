@@ -35,8 +35,8 @@
     canvas { width: 0px;
              height: 0px;}
 
-    #visualization { width: 100%;
-                    height: 100%;
+    #visualization { width: 800px;
+                    height: 600px;
                     position: relative;
                     top: 0;
                     left: 0;}
@@ -53,8 +53,8 @@
            height: 100%;
            z-index: 0;}
 
-    body { width: 100%;
-           height: 100%;}
+    body { width: 800px;
+           height: 600px;}
 
 </style>
 
@@ -83,18 +83,18 @@
     </div>
     
 
-<script src="https://d3js.org/d3.v4.min.js" charset="utf-8"></script>
-<script src="https://d3js.org/topojson.v2.min.js"></script>
-<script src="https://d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
+<script src="//d3js.org/d3.v4.min.js" charset="utf-8"></script>
+<script src="//d3js.org/topojson.v2.min.js"></script>
+<script src="//d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
 <script src="https://d3js.org/d3-queue.v2.min.js"></script>
 <script src="https://d3js.org/d3-scale.v3.min.js"></script>
 <script src="https://d3js.org/d3-array.v2.min.js"></script>
 <script src="d3.color-legend.js"></script>
 <script>
-    var width = window.innerWidth,
-        height = window.innerHeight;
+    var width = 800,
+        height = 600;
 
-    var grad_top = 100,
+    var grad_top = 50,
         grad_bottom = 520,
         grad_right = 200
         grad_width = 50,
@@ -145,15 +145,15 @@
     }
 
     var svg = d3.select("#map").append("svg")
-        .attr("viewBox", "0 0 1000 750")
-        .attr("preserveAspectRatio", "xMidYMid meet");  
+        .attr("width", width)
+        .attr("height", height);
     
     var colorScale = d3.scaleSequential(d3.interpolateViridis)
         .domain([0, 360])
 
     var projection = d3.geoAlbers()
         .scale(1400)
-        .translate([width / 1.5, height / 1.9]);
+        .translate([width / 2.5, height / 2.2]);
 
     var path = d3.geoPath()
         .projection(projection)
@@ -187,11 +187,6 @@
                               {x: projection([value.lon, value.lat])[0], y: projection([value.lon, value.lat])[1]}]);
         });
 
-        svg.append("rect")
-            .attr("width", "100%")
-            .attr("height", "100%")
-            .attr("fill", "#c6c6c6")
-        
         svg.append("path")
             .datum(topojson.feature(miss_basin_data, miss_basin_data.objects.state_data_simplified))
             .attr("class", "state-data")
@@ -248,7 +243,7 @@
             .text(d => d.properties.name);
 
         svg.append("g")
-            .attr("transform", "translate(20,10)")
+            .attr("transform", "translate(335,540)")
             .attr("class", "legend-scale")
             .append(() => legend({color: colorScale, title: "Heading", width: 300}))
             .attr("class", "legend-scale");
@@ -259,7 +254,6 @@
     };
 
     function update(value, data) {
-        
         colorScale = sym_log_transform_vars.includes(value) ?
                         d3.scaleSequentialSymlog(d3.interpolateViridis).domain(var_extent[value]) :
                         d3.scaleSequential(d3.interpolateViridis).domain(var_extent[value]);
@@ -274,7 +268,7 @@
             .remove()
         
         svg.append("g")
-            .attr("transform", "translate(10,10)")
+            .attr("transform", "translate(335,540)")
             .attr("class", "legend-scale")
             .append(() => legend({color: colorScale, title: clean_names[value], width: 300, tickFormat: (value === "air_gas" ? d3.format(".2s") : null), ticks: 4}))
             .attr("class", "legend-scale");
