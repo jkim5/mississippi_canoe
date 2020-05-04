@@ -153,7 +153,7 @@
 
     var projection = d3.geoAlbers()
         .scale(1400)
-        .translate([width / 1.4, height / 1.7]);
+        .translate([width / 1.5, height / 1.9]);
 
     var path = d3.geoPath()
         .projection(projection)
@@ -248,7 +248,7 @@
             .text(d => d.properties.name);
 
         svg.append("g")
-            .attr("transform", "translate(10,10)")
+            .attr("transform", "translate(20,10)")
             .attr("class", "legend-scale")
             .append(() => legend({color: colorScale, title: "Heading", width: 300}))
             .attr("class", "legend-scale");
