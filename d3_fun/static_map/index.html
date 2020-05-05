@@ -94,9 +94,9 @@
     var width = window.innerWidth,
         height = window.innerHeight;
 
-    var grad_top = 100,
-        grad_bottom = 520,
-        grad_right = 200
+    var grad_top = 150,
+        grad_bottom = 570,
+        grad_right = 400
         grad_width = 50,
         grad_left = grad_right - grad_width;
 
@@ -153,7 +153,7 @@
 
     var projection = d3.geoAlbers()
         .scale(1400)
-        .translate([width / 1.5, height / 1.9]);
+        .translate([width / 1.7, height / 1.8]);
 
     var path = d3.geoPath()
         .projection(projection)
